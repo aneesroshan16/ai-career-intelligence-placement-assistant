@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# --- Node ---
+node_modules/
+dist/
+.vite/
+
+# --- Env ---
+.env
+.env.local
+
+# --- ML artifacts (keep metadata, ignore large binaries if regenerated) ---
+backend/app/ml_core/artifacts/*.pkl
+backend/app/ml_core/artifacts/*.cbm
+backend/app/ml_core/artifacts/faiss_*.index
+
+# --- Uploads ---
+backend/data/uploads/
+
+# --- OS/editor ---
+.DS_Store
+.vscode/
+.idea/
