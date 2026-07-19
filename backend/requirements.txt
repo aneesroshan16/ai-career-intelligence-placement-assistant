@@ -30,7 +30,9 @@ python-docx==1.1.2
 
 # --- AI / NLP ---
 sentence-transformers==3.3.1
-faiss-cpu==1.14.3
+faiss-cpu==1.9.0
+langchain==0.3.13
+langchain-community==0.3.13
 
 # --- LLM providers (real integrations — inactive until LLM_PROVIDER is set) ---
 openai==1.58.1
@@ -41,7 +43,7 @@ scikit-learn==1.6.0
 xgboost==2.1.4
 catboost==1.2.10
 pandas==2.2.3
-numpy==2.2.6
+numpy==2.2.1
 
 # --- Dev / testing ---
 pytest==8.3.4
