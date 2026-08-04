@@ -1,0 +1,44 @@
+# Render Blueprint — MUST live at the repository root (Render only
+# auto-detects render.yaml here, not in subfolders). Deploy with:
+# Render Dashboard -> New + -> Blueprint -> select this repo.
+#
+# `rootDir: backend` tells Render to treat backend/ as the build context,
+# so dockerfilePath/dockerContext below are resolved relative to backend/,
+# not the repo root.
+services:
+  - type: web
+    name: career-intel-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        sync: false # Supabase Postgres connection string (postgresql+asyncpg://...)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: resumes
+      - key: AUTH_MODE
+        value: supabase
+      - key: LLM_PROVIDER
+        value: mock # switch to "openai" or "gemini" once keys are configured
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://your-frontend.vercel.app"]'
+      - key: LOG_LEVEL
+        value: INFO
+    autoDeploy: true

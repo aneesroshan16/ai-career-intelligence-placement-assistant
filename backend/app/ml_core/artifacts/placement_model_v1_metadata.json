@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "model_type": "catboost",
+  "model_filename": "placement_model_v1.cbm",
+  "feature_order": [
+    "cgpa",
+    "internships",
+    "projects_count",
+    "certifications_count",
+    "skills_count",
+    "coding_score",
+    "aptitude_score",
+    "ats_score",
+    "interview_score"
+  ],
+  "metrics": {
+    "random_forest": {
+      "roc_auc": 0.6906,
+      "f1": 0.8149,
+      "precision": 0.7254,
+      "recall": 0.9296
+    },
+    "xgboost": {
+      "roc_auc": 0.6792,
+      "f1": 0.7937,
+      "precision": 0.7374,
+      "recall": 0.8592
+    },
+    "catboost": {
+      "roc_auc": 0.6909,
+      "f1": 0.7989,
+      "precision": 0.7331,
+      "recall": 0.8778
+    }
+  },
+  "selected_metrics": {
+    "roc_auc": 0.6909,
+    "f1": 0.7989,
+    "precision": 0.7331,
+    "recall": 0.8778
+  },
+  "trained_at": "2026-07-19T11:35:56.851215+00:00",
+  "git_commit": "unknown",
+  "training_rows": 1500
+}
