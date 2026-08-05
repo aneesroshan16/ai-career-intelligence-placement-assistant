@@ -12,7 +12,7 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
     healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
