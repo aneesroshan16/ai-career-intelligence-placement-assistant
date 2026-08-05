@@ -48,22 +48,22 @@ def _seed_from_messages(messages: list[LLMMessage]) -> int:
     return int(hashlib.sha256(joined.encode()).hexdigest(), 16) % (2**32)
 
 
-def _mock_value_for_field(field_name: str, annotation, rng: random.Random):
+def _mock_value_for_field(field_name: str, annotation, rng: random.Random, context_text: str = ""):
     origin = get_origin(annotation)
     args = get_args(annotation)
 
     # Optional[...] / Union[..., None]
     if origin is typing.Union and type(None) in args:
         non_none = [a for a in args if a is not type(None)]
-        return _mock_value_for_field(field_name, non_none[0], rng) if non_none else None
+        return _mock_value_for_field(field_name, non_none[0], rng, context_text) if non_none else None
 
     if origin in (list, typing.List):
         inner = args[0] if args else str
         count = rng.randint(2, 4)
-        return [_mock_value_for_field(field_name, inner, rng) for _ in range(count)]
+        return [_mock_value_for_field(field_name, inner, rng, context_text) for _ in range(count)]
 
     if isinstance(annotation, type) and issubclass(annotation, BaseModel):
-        return _fill_schema(annotation, rng).model_dump()
+        return _fill_schema(annotation, rng, context_text).model_dump()
 
     if annotation is bool:
         return rng.random() > 0.5
@@ -92,6 +92,13 @@ def _mock_value_for_field(field_name: str, annotation, rng: random.Random):
     if "feedback" in name or "answer" in name or "content" in name:
         return "Solid structure overall — strengthen this with a specific, quantified example."
     if "skill" in name:
+        import re
+        # Try to extract skills from the prompt (e.g. "Focus on closing the following skill gaps, ordered by priority: ['Deep Learning', 'Tableau']")
+        match = re.search(r"skill gaps.*?:?\s*\[(.*?)\]", context_text)
+        if match:
+            skills = [s.strip(" '\"") for s in match.group(1).split(",")]
+            if skills and skills[0]:
+                return rng.choice(skills)
         return rng.choice(["Python", "SQL", "Machine Learning", "React", "Docker", "System Design"])
     if "title" in name or "focus" in name:
         return "Core skill-building module"
@@ -100,10 +107,10 @@ def _mock_value_for_field(field_name: str, annotation, rng: random.Random):
     return f"mock_{field_name}"
 
 
-def _fill_schema(schema: type[TModel], rng: random.Random) -> TModel:
+def _fill_schema(schema: type[TModel], rng: random.Random, context_text: str = "") -> TModel:
     values = {}
     for field_name, field in schema.model_fields.items():
-        values[field_name] = _mock_value_for_field(field_name, field.annotation, rng)
+        values[field_name] = _mock_value_for_field(field_name, field.annotation, rng, context_text)
     return schema(**values)
 
 
@@ -129,4 +136,5 @@ class MockLLMProvider(LLMProvider):
     async def complete_json(self, messages: list[LLMMessage], schema: type[TModel]) -> TModel:
         seed = _seed_from_messages(messages)
         rng = random.Random(seed)
-        return _fill_schema(schema, rng)
+        last_user = next((m.content for m in reversed(messages) if m.role == "user"), "")
+        return _fill_schema(schema, rng, last_user)

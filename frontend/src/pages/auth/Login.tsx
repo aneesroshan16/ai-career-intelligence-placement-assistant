@@ -10,7 +10,6 @@ import { useAuthStore } from "@/store/authStore";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [devRole, setDevRole] = useState<"student" | "admin" | "placement_officer">("student");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -41,66 +40,16 @@ export default function LoginPage() {
       await devLogin({
         user_id: getOrCreateDevUserId(),
         email: email || "dev-student@example.com",
-        role: devRole,
+        role: "student",
       });
+      // The useEffect will navigate on success
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Dev login failed. Is the backend running with AUTH_MODE=dev?"
-      );
-    } finally {
+      setError(err instanceof Error ? err.message : "Sign in failed");
       setLoading(false);
     }
   };
 
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Dev mode sign-in</CardTitle>
-            <CardDescription>
-              VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY aren&apos;t set, so real Supabase auth is
-              disabled. This issues a local dev token instead (requires the backend running with
-              AUTH_MODE=dev).
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form onSubmit={handleDevLogin} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="dev-email">Email (any value)</Label>
-                <Input
-                  id="dev-email"
-                  type="email"
-                  placeholder="dev-student@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dev-role">Role</Label>
-                <select
-                  id="dev-role"
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                  value={devRole}
-                  onChange={(e) => setDevRole(e.target.value as typeof devRole)}
-                >
-                  <option value="student">Student</option>
-                  <option value="admin">Admin</option>
-                  <option value="placement_officer">Placement Officer</option>
-                </select>
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Continue in dev mode"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const onSubmit = isSupabaseConfigured ? handleSubmit : handleDevLogin;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
@@ -110,7 +59,7 @@ export default function LoginPage() {
           <CardDescription>Sign in to your Career Intelligence account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

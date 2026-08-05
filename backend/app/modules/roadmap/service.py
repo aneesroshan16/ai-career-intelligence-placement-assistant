@@ -8,6 +8,8 @@ from app.modules.roadmap.models import Roadmap
 from app.modules.roadmap.repository import RoadmapRepository
 from app.modules.roadmap.schemas import RoadmapPlanGeneration
 from app.modules.skills.repository import SkillsRepository
+from app.modules.skills.models import Role
+from app.modules.resumes.models import Resume
 
 
 class RoadmapService:
@@ -24,13 +26,23 @@ class RoadmapService:
             raise NotFoundError("Skill gap report not found")
 
         missing_skill_names = [m["skill"] for m in gap_report.missing_skills]
+        matched_skill_names = [m["skill"] for m in gap_report.matched_skills]
+        
+        role = await self.session.get(Role, gap_report.role_id)
+        role_name = role.name if role else "your target role"
+
         prompt = (
-            f"Create a {weeks}-week personalized learning roadmap to close these skill gaps, "
-            f"ordered by priority: {missing_skill_names}. Include weekly focus skills, concrete "
-            f"tasks, estimated hours per week, and monthly milestones with deliverables."
+            f"Create a {weeks}-week personalized learning roadmap for a candidate transitioning to {role_name}. "
+            f"The candidate already possesses the following skills: {matched_skill_names}. "
+            f"Focus on closing the following skill gaps, ordered by priority: {missing_skill_names}. "
+            f"Leverage their existing knowledge to accelerate learning where possible. "
+            f"Include weekly focus skills, concrete tasks, estimated hours per week, and monthly milestones with deliverables."
         )
         messages = [
-            LLMMessage(role="system", content="You are an expert technical career mentor and curriculum designer."),
+            LLMMessage(
+                role="system",
+                content="You are an expert technical career mentor and curriculum designer specializing in AI, Data Science, and Computer Science careers."
+            ),
             LLMMessage(role="user", content=prompt),
         ]
         generated: RoadmapPlanGeneration = await self.llm.complete_json(messages, RoadmapPlanGeneration)

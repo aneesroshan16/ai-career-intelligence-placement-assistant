@@ -24,6 +24,11 @@ class SkillsRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_all_role_skills(self) -> list[RoleSkill]:
+        stmt = select(RoleSkill).options(selectinload(RoleSkill.skill))
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def create_gap_report(self, **fields) -> SkillGapReport:
         report = SkillGapReport(**fields)
         self.session.add(report)

@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/form-elements";
 import { generateRoadmap } from "@/lib/api/resumeModules";
-import { analyzeSkillGap, listResumes, listRoles } from "@/lib/api/resumeModules";
+import { analyzeSkillGap, listResumes, listRoles, getRecommendedRoles } from "@/lib/api/resumeModules";
 import { useNavigate } from "react-router-dom";
 
 export default function SkillGapPage() {
@@ -12,8 +12,11 @@ export default function SkillGapPage() {
   const navigate = useNavigate();
 
   const { data: resumes } = useQuery({ queryKey: ["resumes"], queryFn: listResumes });
-  const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: listRoles });
   const activeResume = resumes?.find((r) => r.is_active);
+  const { data: roles } = useQuery({ 
+    queryKey: ["roles", activeResume?.id], 
+    queryFn: () => (activeResume ? getRecommendedRoles(activeResume.id) : listRoles())
+  });
 
   const roadmapMutation = useMutation({
     mutationFn: (gapId: string) => generateRoadmap(gapId, 8),
@@ -24,6 +27,12 @@ export default function SkillGapPage() {
     mutationFn: () => analyzeSkillGap(activeResume!.id, selectedRoleId!),
     onSuccess: (data) => roadmapMutation.mutate(data.id),
   });
+
+  useEffect(() => {
+    if (selectedRoleId && activeResume) {
+      gapMutation.mutate();
+    }
+  }, [selectedRoleId, activeResume]);
 
   return (
     <div className="space-y-6">
@@ -50,11 +59,12 @@ export default function SkillGapPage() {
                   size="sm"
                   onClick={() => setSelectedRoleId(role.id)}
                 >
-                  {role.name}
+                  {role.name} {role.match_percentage !== undefined ? `(${role.match_percentage}%)` : ""}
                 </Button>
               ))}
             </div>
             <Button 
+              className="hidden"
               disabled={!selectedRoleId || gapMutation.isPending || roadmapMutation.isPending} 
               onClick={() => gapMutation.mutate()}
             >
@@ -64,6 +74,12 @@ export default function SkillGapPage() {
                   ? "Generating Roadmap..." 
                   : "Analyze Skill Gap"}
             </Button>
+
+            {(gapMutation.isPending || roadmapMutation.isPending) && (
+              <p className="text-sm text-muted-foreground mt-2 animate-pulse">
+                {gapMutation.isPending ? "Analyzing skill gap..." : "Generating personalized roadmap..."}
+              </p>
+            )}
 
             {gapMutation.data && (
               <div className="space-y-4 pt-4">

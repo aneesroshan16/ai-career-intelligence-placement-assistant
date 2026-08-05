@@ -16,6 +16,20 @@ async def list_roles(request: Request, db: AsyncSession = Depends(get_db)):
     roles = await service.list_roles()
     return success_envelope([RoleOut.model_validate(r, from_attributes=True) for r in roles], request)
 
+@router.get("/roles/recommended")
+async def list_recommended_roles(
+    resume_id: str,
+    request: Request,
+    _: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    service = SkillsService(db)
+    roles = await service.recommend_roles(resume_id)
+    # the recommend_roles already returns RoleOut, but let's just model_validate to be safe if they are objects vs dicts
+    if roles and isinstance(roles[0], RoleOut):
+        return success_envelope([r.model_dump() for r in roles], request)
+    return success_envelope([RoleOut.model_validate(r, from_attributes=True) for r in roles], request)
+
 
 @router.post("/gap-analysis")
 async def gap_analysis(

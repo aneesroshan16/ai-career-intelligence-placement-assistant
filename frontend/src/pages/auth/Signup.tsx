@@ -19,17 +19,38 @@ export default function SignupPage() {
     setError(null);
     setInfo(null);
     setLoading(true);
-    const { data, error: signUpError } = await signUpWithEmail(email, password, fullName);
-    setLoading(false);
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
-    }
-    if (data.session) {
-      navigate("/dashboard");
-    } else {
-      setInfo("Check your email to confirm your account before signing in.");
-    }
+
+    import("@/lib/supabaseClient").then(async ({ isSupabaseConfigured, getOrCreateDevUserId }) => {
+      if (!isSupabaseConfigured) {
+        import("@/lib/api/authModules").then(async ({ devLogin }) => {
+          try {
+            await devLogin({
+              user_id: getOrCreateDevUserId(),
+              email: email || "dev-student@example.com",
+              role: "student",
+              full_name: fullName,
+            });
+            navigate("/dashboard");
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Sign up failed");
+            setLoading(false);
+          }
+        });
+        return;
+      }
+
+      const { data, error: signUpError } = await signUpWithEmail(email, password, fullName);
+      setLoading(false);
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+      if (data.session) {
+        navigate("/dashboard");
+      } else {
+        setInfo("Check your email to confirm your account before signing in.");
+      }
+    });
   };
 
   return (

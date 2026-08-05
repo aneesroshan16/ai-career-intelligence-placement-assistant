@@ -78,10 +78,14 @@ class ATSService:
         )
         return round((matched_weight / total_weight) * 100, 2) if total_weight else 50.0
 
-    async def _generate_suggestions(self, missing_sections: list[str], keyword_score: float) -> list[dict]:
+    async def _generate_suggestions(self, missing_sections: list[str], keyword_score: float, raw_text: str, role_name: str) -> list[dict]:
         prompt = (
-            f"Resume is missing sections: {missing_sections}. Keyword match score vs target role: "
-            f"{keyword_score}%. Generate 3-5 specific, actionable resume improvement suggestions."
+            f"Analyze the following resume text for a candidate targeting a {role_name} role. "
+            f"The resume is missing these standard sections: {missing_sections}. "
+            f"Its keyword match score for the target role is {keyword_score}%. "
+            f"Based on the actual content of the resume below, generate 3-5 highly specific, actionable "
+            f"improvement suggestions tailored to this exact candidate and their goal.\n\n"
+            f"Resume Text:\n{raw_text[:3000]}" # Truncating to avoid massive token usage just in case
         )
         messages = [
             LLMMessage(role="system", content="You are an expert ATS resume reviewer."),
@@ -98,10 +102,14 @@ class ATSService:
         section_score, missing_sections = self._section_score_and_missing(raw_text)
         keyword_score = await self._keyword_score(resume, target_role_id)
 
+        from app.modules.skills.models import Role
+        role = await self.session.get(Role, target_role_id)
+        role_name = role.name if role else "specific"
+
         overall_score = round(
             0.45 * keyword_score + 0.30 * section_score + 0.25 * formatting_score, 2
         )
-        suggestions = await self._generate_suggestions(missing_sections, keyword_score)
+        suggestions = await self._generate_suggestions(missing_sections, keyword_score, raw_text, role_name)
 
         return await self.repo.create(
             resume_id=resume.id,

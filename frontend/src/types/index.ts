@@ -22,6 +22,7 @@ export interface StudentProfile {
 export interface Role {
   id: number;
   name: string;
+  match_percentage?: number;
 }
 
 export interface ResumeSummary {

@@ -8,6 +8,7 @@ from app.shared.base_schemas import ORMBase
 class RoleOut(BaseModel):
     id: int
     name: str
+    match_percentage: float | None = None
 
 
 class SkillEntry(BaseModel):

@@ -15,6 +15,40 @@ class SkillsService:
     async def list_roles(self):
         return await self.repo.list_roles()
 
+    async def recommend_roles(self, resume_id: str):
+        resume = await self.resume_repo.get_by_id(resume_id)
+        if not resume:
+            return await self.list_roles()
+            
+        all_roles = await self.repo.list_roles()
+        all_role_skills = await self.repo.get_all_role_skills()
+        
+        # Group skills by role_id
+        from collections import defaultdict
+        role_skills_map = defaultdict(list)
+        for rs in all_role_skills:
+            role_skills_map[rs.role_id].append(rs)
+            
+        resume_skill_names = {s.raw_text.lower() for s in resume.skills}
+        
+        results = []
+        for role in all_roles:
+            role_skills = role_skills_map.get(role.id, [])
+            total_weight = 0
+            matched_weight = 0
+            for rs in role_skills:
+                total_weight += rs.importance
+                if rs.skill and rs.skill.name.lower() in resume_skill_names:
+                    matched_weight += rs.importance
+            
+            match_pct = round((matched_weight / total_weight) * 100, 2) if total_weight else 0.0
+            
+            from app.modules.skills.schemas import RoleOut
+            results.append(RoleOut(id=role.id, name=role.name, match_percentage=match_pct))
+            
+        results.sort(key=lambda r: r.match_percentage or 0.0, reverse=True)
+        return results
+
     async def analyze_gap(self, resume_id: str, role_id: int) -> SkillGapReport:
         resume = await self.resume_repo.get_by_id(resume_id)
         if resume is None:

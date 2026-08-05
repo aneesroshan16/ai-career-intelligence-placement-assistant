@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, Progress } from "@/components/ui/form-elements";
-import { analyzeATS, listResumes, listRoles, uploadResume } from "@/lib/api/resumeModules";
+import { analyzeATS, listResumes, listRoles, getRecommendedRoles, uploadResume } from "@/lib/api/resumeModules";
 
 export default function ResumeUploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -11,9 +11,12 @@ export default function ResumeUploadPage() {
   const queryClient = useQueryClient();
 
   const { data: resumes } = useQuery({ queryKey: ["resumes"], queryFn: listResumes });
-  const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: listRoles });
-
   const activeResume = resumes?.find((r) => r.is_active);
+
+  const { data: roles } = useQuery({
+    queryKey: ["roles", activeResume?.id],
+    queryFn: () => (activeResume ? getRecommendedRoles(activeResume.id) : listRoles()),
+  });
 
   const uploadMutation = useMutation({
     mutationFn: uploadResume,
@@ -28,6 +31,12 @@ export default function ResumeUploadPage() {
     const file = e.target.files?.[0];
     if (file) uploadMutation.mutate(file);
   };
+
+  useEffect(() => {
+    if (selectedRoleId && activeResume?.parse_status === "completed") {
+      atsMutation.mutate();
+    }
+  }, [selectedRoleId, activeResume?.parse_status]);
 
   return (
     <div className="space-y-6">
@@ -77,16 +86,23 @@ export default function ResumeUploadPage() {
                   size="sm"
                   onClick={() => setSelectedRoleId(role.id)}
                 >
-                  {role.name}
+                  {role.name} {role.match_percentage !== undefined ? `(${role.match_percentage}%)` : ""}
                 </Button>
               ))}
             </div>
             <Button
               disabled={!selectedRoleId || atsMutation.isPending}
               onClick={() => atsMutation.mutate()}
+              className="hidden" // Hiding the button since it now triggers automatically
             >
               {atsMutation.isPending ? "Analyzing..." : "Analyze Resume"}
             </Button>
+
+            {atsMutation.isPending && (
+              <p className="text-sm text-muted-foreground mt-2 animate-pulse">
+                Analyzing resume...
+              </p>
+            )}
 
             {atsMutation.isError && (
               <p className="text-sm text-destructive mt-2">

@@ -37,6 +37,8 @@ export const getATSHistory = (resumeId: string) =>
 
 // --- Skills / Skill Gap ---
 export const listRoles = () => unwrap<Role[]>(apiClient.get("/skills/roles"));
+export const getRecommendedRoles = (resumeId: string) => 
+  unwrap<Role[]>(apiClient.get(`/skills/roles/recommended?resume_id=${resumeId}`));
 export const analyzeSkillGap = (resumeId: string, roleId: number) =>
   unwrap<SkillGapReport>(apiClient.post("/skills/gap-analysis", { resume_id: resumeId, role_id: roleId }));
 
