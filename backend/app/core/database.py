@@ -15,6 +15,7 @@ engine = create_async_engine(
     echo=settings.DEBUG and settings.ENVIRONMENT == "local",
     pool_pre_ping=True,
     future=True,
+    connect_args={"statement_cache_size": 0} if "asyncpg" in settings.DATABASE_URL else {},
 )
 
 AsyncSessionLocal = async_sessionmaker(
