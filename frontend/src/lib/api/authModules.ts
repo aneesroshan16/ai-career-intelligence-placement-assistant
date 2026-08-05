@@ -5,6 +5,7 @@ export interface DevLoginPayload {
   user_id: string;
   email: string;
   role?: "student" | "admin" | "placement_officer";
+  full_name?: string;
 }
 
 interface DevTokenResponse {
