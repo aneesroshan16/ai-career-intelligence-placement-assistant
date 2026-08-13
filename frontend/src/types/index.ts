@@ -24,6 +24,11 @@ export interface Role {
   id: number;
   name: string;
   match_percentage?: number;
+  reasoning?: string;
+  matched_skills?: string[];
+  developing_skills?: string[];
+  missing_skills?: string[];
+  next_steps?: string[];
 }
 
 export interface ResumeSummary {
@@ -92,6 +97,7 @@ export interface ATSReport {
   section_score: number | null;
   missing_sections: string[] | null;
   suggestions: ComprehensiveATSAnalysis[] | { issue: string; recommendation: string; severity: string }[] | null;
+  recommended_roles?: RecommendedRole[] | null;
   target_role_id: number | null;
 }
 
@@ -194,6 +200,7 @@ export interface CodingAttempt {
   passed_cases: number;
   total_cases: number;
   score: number | null;
+  execution_log?: { case?: number; passed?: boolean; hidden?: boolean; stdout?: string; stderr?: string; error?: string }[] | null;
 }
 
 export interface AptitudeQuestion {

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/form-elements";
-import { signInWithEmail, signInWithGoogle } from "@/lib/supabaseClient";
+import { authErrorMessage, signInWithEmail, signInWithGoogle } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
@@ -32,10 +32,26 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error: signInError } = await signInWithEmail(email, password);
-    if (signInError) {
+    try {
+      const { error: signInError } = await signInWithEmail(email, password);
+      if (signInError) setError(signInError.message);
+    } catch (authFailure) {
+      setError(authErrorMessage(authFailure));
+    } finally {
       setLoading(false);
-      setError(signInError.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const { error: googleError } = await signInWithGoogle();
+      if (googleError) setError(googleError.message);
+    } catch (authFailure) {
+      setError(authErrorMessage(authFailure));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,7 +91,7 @@ export default function LoginPage() {
               <span className="bg-card px-2 text-muted-foreground">Or</span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={() => signInWithGoogle()}>
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
             Continue with Google
           </Button>
           <p className="text-center text-sm text-muted-foreground">

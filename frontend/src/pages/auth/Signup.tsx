@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/form-elements";
-import { signInWithGoogle, signUpWithEmail } from "@/lib/supabaseClient";
+import { authErrorMessage, signInWithGoogle, signUpWithEmail } from "@/lib/supabaseClient";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
@@ -20,18 +20,32 @@ export default function SignupPage() {
     setInfo(null);
     setLoading(true);
 
-    const { data, error: signUpError } = await signUpWithEmail(email, password, fullName);
-    setLoading(false);
-    
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
+    try {
+      const { data, error: signUpError } = await signUpWithEmail(email, password, fullName);
+      if (signUpError) {
+        setError(signUpError.message);
+      } else if (data.session) {
+        navigate("/dashboard");
+      } else {
+        setInfo("Check your email to confirm your account before signing in.");
+      }
+    } catch (authFailure) {
+      setError(authErrorMessage(authFailure));
+    } finally {
+      setLoading(false);
     }
-    
-    if (data.session) {
-      navigate("/dashboard");
-    } else {
-      setInfo("Check your email to confirm your account before signing in.");
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const { error: googleError } = await signInWithGoogle();
+      if (googleError) setError(googleError.message);
+    } catch (authFailure) {
+      setError(authErrorMessage(authFailure));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,7 +91,7 @@ export default function SignupPage() {
               <span className="bg-card px-2 text-muted-foreground">Or</span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={() => signInWithGoogle()}>
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
             Continue with Google
           </Button>
           <p className="text-center text-sm text-muted-foreground">

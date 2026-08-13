@@ -10,6 +10,8 @@ from app.core.exceptions import NotFoundError, ValidationFailedError
 from app.modules.interview.models import InterviewSession
 from app.modules.interview.repository import InterviewRepository
 from app.modules.interview.schemas import NextQuestion, TurnFeedback
+from app.modules.resumes.repository import ResumeRepository
+from app.modules.skills.models import Role
 
 _MAX_TURNS = 5
 
@@ -29,8 +31,18 @@ class InterviewService:
         if mode not in ("hr", "technical"):
             raise ValidationFailedError("mode must be 'hr' or 'technical'")
 
+        resume = await ResumeRepository(self.session).get_active_for_user(user_id)
+        role = await self.session.get(Role, role_id) if role_id else None
+        # The opening question cites only persisted resume evidence.  This keeps
+        # interviews grounded even when an LLM provider is unavailable.
+        if mode == "technical" and resume and resume.projects:
+            project = resume.projects[0]
+            first_question = f"For the {role.name if role else 'target'} role, walk me through your project '{project.title}' and the technical decisions you made."
+        elif mode == "hr" and role:
+            first_question = f"Why are you targeting the {role.name} role, and which experience from your resume best prepares you for it?"
+        else:
+            first_question = _OPENING_QUESTIONS[mode]
         interview = await self.repo.create_session(user_id=uuid.UUID(user_id), mode=mode, role_id=role_id)
-        first_question = _OPENING_QUESTIONS[mode]
         await self.repo.add_turn(session_id=interview.id, turn_number=1, question=first_question)
         return interview, first_question
 

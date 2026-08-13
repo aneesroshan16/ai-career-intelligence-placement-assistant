@@ -10,6 +10,7 @@ from app.modules.roadmap.schemas import RoadmapPlanGeneration
 from app.modules.skills.repository import SkillsRepository
 from app.modules.skills.models import Role
 from app.modules.resumes.models import Resume
+from app.modules.skills.catalog import metadata_for
 
 
 class RoadmapService:
@@ -29,7 +30,26 @@ class RoadmapService:
         role = await self.session.get(Role, gap_report.role_id)
         role_name = role.name if role else "your target role"
 
-        # Deterministic Roadmap Generator based on prioritized gaps
+        # Deterministic roadmap based on the persisted gap report.  Sort by
+        # priority and move unmet prerequisites before dependent topics.
+        missing_skills.sort(key=lambda item: item.get("priority", item.get("importance", 0)), reverse=True)
+        missing_names = {item["skill"] for item in missing_skills}
+        ordered_skills = []
+        visiting = set()
+        def add_with_prerequisites(item):
+            name = item["skill"]
+            if name in visiting or any(existing["skill"] == name for existing in ordered_skills):
+                return
+            visiting.add(name)
+            for prerequisite in item.get("prerequisites", metadata_for(name)["prerequisites"]):
+                if prerequisite in missing_names:
+                    prerequisite_item = next(candidate for candidate in missing_skills if candidate["skill"] == prerequisite)
+                    add_with_prerequisites(prerequisite_item)
+            visiting.remove(name)
+            ordered_skills.append(item)
+        for item in missing_skills:
+            add_with_prerequisites(item)
+
         plan = []
         milestones = []
         
@@ -44,15 +64,17 @@ class RoadmapService:
             milestones.append({"month": 1, "milestone": "Ready for Interviews", "deliverable": "Updated Resume"})
         else:
             import math
-            skills_per_week = max(1, math.ceil(len(missing_skills) / weeks))
+            skills_per_week = max(1, math.ceil(len(ordered_skills) / weeks))
             current_skill_idx = 0
             
             for w in range(1, weeks + 1):
-                week_skills = missing_skills[current_skill_idx : current_skill_idx + skills_per_week]
+                week_skills = ordered_skills[current_skill_idx : current_skill_idx + skills_per_week]
                 
                 if week_skills:
                     focus = week_skills[0]["skill"]
-                    tasks = [f"Learn fundamentals of {s['skill']}" for s in week_skills] + [f"Build a small project using {focus}"]
+                    focus_meta = metadata_for(focus)
+                    tasks = [f"Study {s['skill']}: {', '.join(metadata_for(s['skill'])['topics'][:2])}" for s in week_skills]
+                    tasks += [f"Practice: {focus_meta['assessment']}", f"Mini-project: apply {focus} to a {role_name} scenario"]
                 else:
                     focus = "Advanced Practice & Revision"
                     tasks = ["Solve related problems", "Revise previous concepts"]
@@ -60,6 +82,12 @@ class RoadmapService:
                 plan.append({
                     "week": w,
                     "focus_skill": focus,
+                    "focus_skills": [s["skill"] for s in week_skills] or [focus],
+                    "why_required": f"{focus} is a {week_skills[0].get('gap_severity', 'priority')} gap for {role_name}." if week_skills else "Consolidate demonstrated skills before interviews.",
+                    "current_level": week_skills[0].get("current_level", "developing") if week_skills else "developing",
+                    "target_level": week_skills[0].get("required_level", "role-ready") if week_skills else "role-ready",
+                    "topics": metadata_for(focus)["topics"],
+                    "assessment": metadata_for(focus)["assessment"],
                     "tasks": tasks,
                     "estimated_hours": 10,
                     "tasks_completed": [False] * len(tasks)

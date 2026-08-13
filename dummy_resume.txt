@@ -1,0 +1,4 @@
+John Doe
+Software Engineer
+Skills: Python, Java, React, SQL
+Experience: 2 years at Tech Corp as a Backend Developer.

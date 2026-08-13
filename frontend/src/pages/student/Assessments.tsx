@@ -16,10 +16,16 @@ import { Progress } from "@/components/ui/progress";
 
 function CodingTab() {
   const [code, setCode] = useState("");
+  const [language, setLanguage] = useState<"python" | "java" | "c" | "cpp">("python");
   const generateMutation = useMutation({ mutationFn: () => generateCodingProblem(undefined, "medium") });
   const submitMutation = useMutation({
-    mutationFn: () => submitCode(generateMutation.data!.id, code),
+    mutationFn: () => submitCode(generateMutation.data!.id, code, language),
   });
+  const startChallenge = () => {
+    setCode("");
+    generateMutation.mutate();
+  };
+  const editorCode = code || generateMutation.data?.starter_code?.[language] || "";
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -30,7 +36,14 @@ function CodingTab() {
           <p className="text-muted-foreground max-w-md">
             Test your programming skills with an AI-generated coding challenge tailored to your target role.
           </p>
-          <Button size="lg" onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} className="shadow-lg">
+          <div className="flex flex-wrap justify-center gap-2">
+            {(["python", "java", "c", "cpp"] as const).map((option) => (
+              <Button key={option} type="button" variant={language === option ? "default" : "outline"} size="sm" onClick={() => setLanguage(option)}>
+                {{ python: "Python", java: "Java", c: "C", cpp: "C++" }[option]}
+              </Button>
+            ))}
+          </div>
+          <Button size="lg" onClick={startChallenge} disabled={generateMutation.isPending} className="shadow-lg">
             {generateMutation.isPending ? "Generating Challenge..." : "Start Coding Test"}
           </Button>
         </Card>
@@ -57,12 +70,17 @@ function CodingTab() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Solution Workspace</span>
-                <span className="text-xs text-muted-foreground">Python 3</span>
+                <select aria-label="Programming language" value={language} onChange={(e) => { setLanguage(e.target.value as typeof language); setCode(""); }} className="rounded-md border bg-background px-2 py-1 text-xs font-medium">
+                  <option value="python">Python 3</option>
+                  <option value="java">Java</option>
+                  <option value="c">C</option>
+                  <option value="cpp">C++</option>
+                </select>
               </div>
               <textarea
                 className="w-full rounded-lg border bg-background/50 p-4 font-mono text-sm shadow-inner min-h-[300px] focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-y"
                 placeholder="Write your solution here..."
-                value={code || generateMutation.data.starter_code?.python || ""}
+                value={editorCode}
                 onChange={(e) => setCode(e.target.value)}
                 spellCheck={false}
               />
@@ -81,6 +99,12 @@ function CodingTab() {
                     </Badge>
                   </motion.div>
                 )}
+                {submitMutation.data?.execution_log?.find((entry) => entry.stderr || entry.error) && (
+                  <p className="mt-2 max-w-md text-xs text-destructive">
+                    {submitMutation.data.execution_log.find((entry) => entry.stderr || entry.error)?.stderr || submitMutation.data.execution_log.find((entry) => entry.stderr || entry.error)?.error}
+                  </p>
+                )}
+                {submitMutation.isError && <p className="text-sm text-destructive">The code could not be run. Check the selected language and try again.</p>}
               </div>
               <Button size="lg" onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || submitMutation.data?.score === 100}>
                 {submitMutation.isPending ? "Running Tests..." : submitMutation.data ? "Submit Again" : "Run Code"}

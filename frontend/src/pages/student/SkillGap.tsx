@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,12 @@ export default function SkillGapPage() {
 
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (!selectedRoleId && user?.profile?.target_role && roles) {
+      setSelectedRoleId(roles.find((role) => role.name === user.profile?.target_role)?.id ?? null);
+    }
+  }, [roles, selectedRoleId, user?.profile?.target_role]);
+
   const roadmapMutation = useMutation({
     mutationFn: (gapId: string) => generateRoadmap(gapId, 8),
     onSuccess: (roadmap) => navigate(`/roadmap?id=${roadmap.id}`),
@@ -42,7 +48,7 @@ export default function SkillGapPage() {
       <div className="space-y-2">
         <h1 className="text-4xl font-extrabold tracking-tight">Skill Gap Analysis</h1>
         <p className="text-muted-foreground text-lg">
-          Compare your current skills against industry requirements for your target role.
+          Compare verified resume evidence against the requirements for your selected target role.
         </p>
       </div>
 

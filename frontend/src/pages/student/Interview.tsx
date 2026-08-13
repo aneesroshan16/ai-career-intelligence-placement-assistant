@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/form-elements";
 import { startInterview, submitInterviewAnswer } from "@/lib/api/assessmentModules";
+import { getMe, listRoles } from "@/lib/api/resumeModules";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, User, Mic, Send, Lightbulb, Activity, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 
@@ -15,9 +16,12 @@ export default function InterviewPage() {
   const [status, setStatus] = useState<string>("not_started");
   const [lastFeedback, setLastFeedback] = useState<Record<string, unknown> | null>(null);
   const [history, setHistory] = useState<{q: string, a: string, f?: Record<string, unknown>}[]>([]);
+  const { data: user } = useQuery({ queryKey: ["user"], queryFn: getMe });
+  const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: listRoles });
+  const targetRoleId = roles?.find((role) => role.name === user?.profile?.target_role)?.id;
 
   const startMutation = useMutation({
-    mutationFn: (m: "hr" | "technical") => startInterview(m),
+    mutationFn: (m: "hr" | "technical") => startInterview(m, targetRoleId),
     onSuccess: (result) => {
       setSessionId(result.session.id);
       setQuestion(result.first_question);

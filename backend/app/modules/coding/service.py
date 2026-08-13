@@ -34,7 +34,12 @@ class CodingService:
             title=generated.title,
             difficulty=difficulty,
             statement=generated.statement,
-            starter_code={"python": generated.starter_code_python},
+            starter_code={
+                "python": generated.starter_code_python,
+                "java": "public class Main {\n    public static void main(String[] args) {\n        // Read stdin and write the required output.\n    }\n}\n",
+                "c": "#include <stdio.h>\n\nint main(void) {\n    // Read stdin and write the required output.\n    return 0;\n}\n",
+                "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Read stdin and write the required output.\n    return 0;\n}\n",
+            },
             test_cases=[tc.model_dump() for tc in generated.test_cases],
         )
 

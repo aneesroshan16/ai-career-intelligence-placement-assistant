@@ -10,6 +10,10 @@ class RoleOut(BaseModel):
     name: str
     match_percentage: float | None = None
     reasoning: str | None = None
+    matched_skills: list[str] = []
+    developing_skills: list[str] = []
+    missing_skills: list[str] = []
+    next_steps: list[str] = []
 
 class RoleRecommendation(BaseModel):
     name: str

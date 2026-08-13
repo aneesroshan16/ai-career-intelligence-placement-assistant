@@ -76,7 +76,11 @@ class ResumeRepository:
 
     async def persist_parsed_entities(self, resume_id: str, parsed, raw_text: str) -> None:
         rid = uuid.UUID(resume_id)
-        await self.session.execute(update(Resume).where(Resume.id == rid).values(raw_text=raw_text))
+        # Persist the normalized profile fields as well as the raw evidence.  Downstream
+        # services use these fields/child rows, never an invented candidate profile.
+        await self.session.execute(update(Resume).where(Resume.id == rid).values(
+            raw_text=raw_text, name=parsed.name, email=parsed.email, phone=parsed.phone
+        ))
 
         for skill in parsed.skills:
             self.session.add(ResumeSkill(resume_id=rid, raw_text=skill.raw_text))
@@ -97,6 +101,12 @@ class ResumeRepository:
             )
         for cert in parsed.certifications:
             self.session.add(ResumeCertification(resume_id=rid, title=cert.title, issuer=cert.issuer))
+        for experience in parsed.experience:
+            from app.modules.resumes.models import ResumeExperience
+            self.session.add(ResumeExperience(
+                resume_id=rid, company=experience.company, role=experience.role,
+                description=experience.description, is_current=experience.is_current,
+            ))
 
         await self.session.execute(update(Resume).where(Resume.id == rid).values(parse_status="completed"))
         await self.session.commit()

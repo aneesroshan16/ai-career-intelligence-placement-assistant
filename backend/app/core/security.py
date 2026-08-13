@@ -86,6 +86,13 @@ async def get_current_claims(
     if credentials is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     token = credentials.credentials
+    if settings.AUTH_MODE == "dev":
+        # Development mode remains useful for local API tests, but production
+        # authentication always verifies the Supabase-issued signature.
+        try:
+            return jwt.decode(token, options={"verify_signature": False, "verify_aud": False})
+        except jwt.PyJWTError as exc:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid development token") from exc
     return await _decode_supabase_jwt(token)
 
 

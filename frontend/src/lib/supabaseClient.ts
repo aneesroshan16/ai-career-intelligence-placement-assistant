@@ -18,7 +18,17 @@ export const supabase = createClient(
   supabaseAnonKey || "placeholder-anon-key"
 );
 
+/** Converts browser/network failures into a message that a student can act on. */
+export function authErrorMessage(error: unknown): string {
+  if (error instanceof TypeError && /fetch|network/i.test(error.message)) {
+    return "Unable to reach Supabase. Check your internet connection and verify VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then restart the frontend server.";
+  }
+  if (error instanceof Error) return error.message;
+  return "Authentication could not be completed. Please try again.";
+}
+
 export async function signUpWithEmail(email: string, password: string, fullName: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.");
   return supabase.auth.signUp({
     email,
     password,
@@ -27,10 +37,12 @@ export async function signUpWithEmail(email: string, password: string, fullName:
 }
 
 export async function signInWithEmail(email: string, password: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.");
   return supabase.auth.signInWithPassword({ email, password });
 }
 
 export async function signInWithGoogle() {
+  if (!isSupabaseConfigured) throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.");
   return supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: `${window.location.origin}/dashboard` },

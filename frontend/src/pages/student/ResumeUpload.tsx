@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, Progress } from "@/components/ui/form-elements";
-import { analyzeATS, listResumes, uploadResume, getLatestATSReport } from "@/lib/api/resumeModules";
+import { analyzeATS, listResumes, uploadResume, getLatestATSReport, getMe, listRoles } from "@/lib/api/resumeModules";
 import { CheckCircle2, AlertTriangle, FileText, Search, ArrowRight, UploadCloud, XCircle, Sparkles } from "lucide-react";
 import type { ComprehensiveATSAnalysis, ResumeSummary } from "@/types";
 import { motion } from "framer-motion";
@@ -32,7 +32,10 @@ export default function ResumeUploadPage() {
   ];
 
   const { data: resumes } = useQuery<ResumeSummary[]>({ queryKey: ["resumes"], queryFn: listResumes });
+  const { data: user } = useQuery({ queryKey: ["user"], queryFn: getMe });
+  const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: listRoles });
   const activeResume = resumes?.find((r) => r.is_active);
+  const targetRoleId = roles?.find((role) => role.name === user?.profile?.target_role)?.id;
 
   const { data: latestReport, refetch: refetchReport } = useQuery({
     queryKey: ["atsReport", activeResume?.id],
@@ -47,7 +50,7 @@ export default function ResumeUploadPage() {
   });
 
   const atsMutation = useMutation({
-    mutationFn: () => analyzeATS(activeResume!.id, undefined),
+    mutationFn: () => analyzeATS(activeResume!.id, targetRoleId),
     onSuccess: () => {
       refetchReport();
     }

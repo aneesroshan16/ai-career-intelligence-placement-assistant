@@ -53,3 +53,4 @@ class CodingAttemptOut(ORMBase):
     passed_cases: int
     total_cases: int
     score: float | None = None
+    execution_log: list[dict] | None = None

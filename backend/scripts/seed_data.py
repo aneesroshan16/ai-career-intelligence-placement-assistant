@@ -23,7 +23,7 @@ ROLES = [
     "Big Data Engineer", "AI Research Scientist", "Backend Developer", "Frontend Developer",
     "Full Stack Developer", "Cloud Architect", "DevOps Engineer", "Cybersecurity Analyst",
     "Mobile App Developer", "Game Developer", "Embedded Systems Engineer", "Blockchain Developer",
-    "Software Architect", "Database Administrator"
+    "Software Architect", "Database Administrator", "Python Developer", "Business Analyst", "Cloud Engineer"
 ]
 
 DEPARTMENTS = ["CSE", "AI & DS", "ECE", "IT", "MECH"]
@@ -149,6 +149,15 @@ ROLE_SKILLS = {
     "Database Administrator": [
         ("SQL", 5), ("PostgreSQL", 5), ("MongoDB", 4), ("NoSQL", 4),
         ("Linux", 4), ("AWS", 3), ("System Design", 3), ("Problem Solving", 4),
+    ],
+    "Python Developer": [
+        ("Python", 5), ("REST API", 4), ("SQL", 4), ("Git", 4), ("FastAPI", 3), ("Docker", 3),
+    ],
+    "Business Analyst": [
+        ("SQL", 4), ("Statistics", 3), ("Tableau", 4), ("Power BI", 4), ("Communication", 5), ("Problem Solving", 4),
+    ],
+    "Cloud Engineer": [
+        ("AWS", 5), ("Azure", 4), ("GCP", 4), ("Docker", 4), ("Kubernetes", 4), ("Linux", 4), ("Terraform", 4),
     ],
 }
 

@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -23,7 +23,14 @@ export function Navbar() {
         <ThemeToggle />
         {user && (
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">{user.full_name}</span>
+            <div
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-primary/30 bg-primary/10 text-primary"
+              aria-label="Profile"
+              title={user.full_name || "Profile"}
+            >
+              {user.avatar_url ? <img src={user.avatar_url} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-4 w-4" />}
+            </div>
+            <span className="hidden text-sm font-medium sm:inline">{user.full_name}</span>
             <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
               <LogOut className="h-4 w-4" />
             </Button>

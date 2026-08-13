@@ -94,6 +94,46 @@ class ATSService:
         result: ATSSuggestionSet = await self.llm.complete_json(messages, ATSSuggestionSet)
         return [s.model_dump() for s in result.suggestions]
 
+    async def _comprehensive_analysis(self, resume, role_id: int | None, role_name: str, keyword_score: float,
+                                      section_score: float, formatting_score: float, missing_sections: list[str]) -> dict:
+        """Create explainable UI data from stored resume evidence, never fabricated skills."""
+        from app.modules.skills.service import SkillsService
+        recommendations = await SkillsService(self.session).recommend_roles(str(resume.id))
+        # Load names from the recommendation selected role when available; role skill
+        # details are otherwise represented by the deterministic keyword score.
+        selected = next((r for r in recommendations if r.id == role_id), None)
+        missing_keywords = (selected.missing_skills if selected else [])[:8]
+        contact_score = 100.0 if resume.email and resume.phone else 60.0 if (resume.email or resume.phone) else 0.0
+        experience_score = min(100.0, len(resume.experience) * 35 + len(resume.projects) * 15)
+        project_score = min(100.0, len(resume.projects) * 35)
+        education_score = 100.0 if resume.education else 0.0
+        skills_score = keyword_score
+        strengths = []
+        if resume.skills:
+            strengths.append(f"Resume evidence supports {len(resume.skills)} normalized skills.")
+        if resume.projects:
+            strengths.append(f"Includes {len(resume.projects)} project record(s) that can support interview discussion.")
+        if resume.email or resume.phone:
+            strengths.append("Includes candidate contact information.")
+        areas = [f"Add a clear {section} section." for section in missing_sections]
+        if missing_keywords:
+            areas.append(f"Demonstrate relevant {role_name} evidence for: {', '.join(missing_keywords[:3])}.")
+        return {
+            "overall_score": round(0.45 * keyword_score + 0.20 * section_score + 0.15 * formatting_score + 0.10 * contact_score + 0.10 * ((experience_score + project_score + education_score) / 3), 2),
+            "category_scores": {"structure": section_score, "keywords": keyword_score, "skills": skills_score,
+                                "experience": experience_score, "projects": project_score, "education": education_score,
+                                "ats_compatibility": formatting_score, "contact_info": contact_score},
+            "strengths": strengths or ["Upload a fuller resume to establish verified strengths."],
+            "areas_to_improve": areas or ["Tailor project outcomes and keywords to the selected role."],
+            "missing_keywords": missing_keywords,
+            "resume_summary": f"Parsed resume contains {len(resume.skills)} skills, {len(resume.projects)} projects and {len(resume.experience)} experience entries; analysis is targeted to {role_name}.",
+            "recommended_roles": [{"role_name": r.name, "match_percentage": r.match_percentage,
+                                    "why_matches": r.matched_skills[:3] or ["No required-skill evidence found yet"],
+                                    "missing_skills": r.missing_skills[:5]} for r in recommendations],
+            "actionable_improvements": areas[:5] or ["Quantify project outcomes and tailor the resume for the target role."],
+            "suggested_changes": [{"current": "Skills are listed without role context.", "suggested": f"Connect verified skills and projects to {role_name} responsibilities."}],
+        }
+
     async def analyze(self, resume_id: str, target_role_id: int | None = None) -> ATSReport:
         resume = await self.resume_repo.get_by_id(resume_id)
         raw_text = resume.raw_text or " ".join(s.raw_text for s in resume.skills)
@@ -120,20 +160,21 @@ class ATSService:
             if role:
                 role_name = role.name
 
-        overall_score = round(
-            0.45 * keyword_score + 0.30 * section_score + 0.25 * formatting_score, 2
-        )
-        
-        suggestions = await self._generate_suggestions(missing_sections, keyword_score, raw_text, role_name)
+        comprehensive = await self._comprehensive_analysis(resume, target_role_id, role_name, keyword_score,
+                                                           section_score, formatting_score, missing_sections)
+        # Deterministic report content is used for scores and recommendations.  The
+        # optional LLM advice is deliberately not required for a valid ATS report.
+        suggestions = [comprehensive]
 
         return await self.repo.create(
             resume_id=resume.id,
-            overall_score=overall_score,
+            overall_score=comprehensive["overall_score"],
             keyword_score=keyword_score,
             formatting_score=formatting_score,
             section_score=section_score,
             missing_sections=missing_sections,
             suggestions=suggestions,
+            recommended_roles=comprehensive["recommended_roles"],
             target_role_id=target_role_id,
         )
 
