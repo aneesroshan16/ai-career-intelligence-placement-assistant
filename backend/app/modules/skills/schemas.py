@@ -9,6 +9,15 @@ class RoleOut(BaseModel):
     id: int
     name: str
     match_percentage: float | None = None
+    reasoning: str | None = None
+
+class RoleRecommendation(BaseModel):
+    name: str
+    match_percentage: float
+    reasoning: str
+
+class RoleRecommendationsList(BaseModel):
+    recommendations: list[RoleRecommendation]
 
 
 class SkillEntry(BaseModel):
@@ -19,6 +28,12 @@ class SkillEntry(BaseModel):
 class GapAnalysisIn(BaseModel):
     resume_id: uuid.UUID
     role_id: int
+
+
+class SkillGapGeneration(BaseModel):
+    matched_skills: list[SkillEntry]
+    missing_skills: list[SkillEntry]
+    match_percentage: float
 
 
 class SkillGapReportOut(ORMBase):

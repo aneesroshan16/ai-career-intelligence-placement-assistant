@@ -20,12 +20,23 @@ class Resume(Base):
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     embedding_id: Mapped[str | None] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    
+    # Extracted fields
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)
+    phone: Mapped[str | None] = mapped_column(String, nullable=True)
+    github_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    portfolio_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    achievements: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     skills: Mapped[list["ResumeSkill"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
     education: Mapped[list["ResumeEducation"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
     projects: Mapped[list["ResumeProject"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
     certifications: Mapped[list["ResumeCertification"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
+    experience: Mapped[list["ResumeExperience"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
 
 
 class ResumeSkill(Base):
@@ -36,6 +47,7 @@ class ResumeSkill(Base):
     skill_id: Mapped[int | None] = mapped_column(ForeignKey("skills_master.id"), nullable=True)
     raw_text: Mapped[str] = mapped_column(String, nullable=False)
     proficiency: Mapped[str | None] = mapped_column(String, nullable=True)
+    category: Mapped[str | None] = mapped_column(String, nullable=True) # language, framework, tool, general
 
     resume: Mapped["Resume"] = relationship(back_populates="skills")
 
@@ -79,3 +91,19 @@ class ResumeCertification(Base):
     credential_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
     resume: Mapped["Resume"] = relationship(back_populates="certifications")
+
+
+class ResumeExperience(Base):
+    __tablename__ = "resume_experience"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    resume_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("resumes.id", ondelete="CASCADE"))
+    company: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[str | None] = mapped_column(String, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    is_current: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    resume: Mapped["Resume"] = relationship(back_populates="experience")
+

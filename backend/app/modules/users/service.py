@@ -18,6 +18,9 @@ class UserService:
         """
         user = await self.repo.get_by_id(user_id)
         if user is None:
+            user_by_email = await self.repo.get_by_email(email)
+            if user_by_email:
+                return user_by_email
             user = await self.repo.create(user_id=user_id, email=email)
         return user
 

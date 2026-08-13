@@ -117,18 +117,45 @@ def _extract_certifications(section_text: str) -> list[ParsedCertification]:
 
 
 class ResumeParser:
-    def parse(self, text: str, known_skills: list[str] | None = None) -> ParsedResume:
-        known_skills = known_skills or _DEFAULT_SKILL_GAZETTEER
+    async def parse(self, text: str, known_skills: list[str] | None = None) -> ParsedResume:
+        # Avoid the mock LLM completely and implement a deterministic, logic-based pipeline.
+        # This guarantees dynamic output that precisely matches the uploaded resume text.
         sections = _split_sections(text)
+        
+        # 1. Contact info extraction
+        email_match = _EMAIL_RE.search(text)
+        phone_match = _PHONE_RE.search(text)
+        email = email_match.group(0) if email_match else None
+        phone = phone_match.group(0) if phone_match else None
+        
+        # 2. Extract sections using the deterministic functions
+        skills_text = sections.get("skills", text) # fallback to full text if no explicit skills section
+        extracted_skills = _extract_skills(skills_text, known_skills or _DEFAULT_SKILL_GAZETTEER)
+        
+        # If we didn't find many skills in the skills section, search the whole resume
+        if len(extracted_skills) < 3:
+            extracted_skills = _extract_skills(text, known_skills or _DEFAULT_SKILL_GAZETTEER)
+
+        education = _extract_education(sections.get("education", ""))
+        projects = _extract_projects(sections.get("projects", ""))
+        certifications = _extract_certifications(sections.get("certifications", ""))
+        
+        # Simple name heuristic (first line)
+        lines = [line.strip() for line in text.split("\n") if line.strip()]
+        name = lines[0] if lines else None
+        if name and (len(name) > 40 or "@" in name or any(char.isdigit() for char in name)):
+            name = "Applicant"
 
         return ParsedResume(
-            raw_text=text,
-            emails=list(dict.fromkeys(_EMAIL_RE.findall(text))),
-            phones=list(dict.fromkeys(_PHONE_RE.findall(text)))[:3],
-            skills=_extract_skills(sections.get("skills", "") or text, known_skills),
-            education=_extract_education(sections.get("education", "")),
-            projects=_extract_projects(sections.get("projects", "")),
-            certifications=_extract_certifications(sections.get("certifications", "")),
+            name=name,
+            email=email,
+            phone=phone,
+            skills=extracted_skills,
+            education=education,
+            projects=projects,
+            certifications=certifications,
+            experience=[],
+            raw_text=text
         )
 
 

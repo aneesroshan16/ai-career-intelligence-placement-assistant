@@ -17,6 +17,7 @@ export interface StudentProfile {
   active_backlogs: number;
   phone?: string | null;
   location?: string | null;
+  target_role?: string | null;
 }
 
 export interface Role {
@@ -47,6 +48,41 @@ export interface Resume extends ResumeSummary {
   certifications: { id: number; title: string; issuer: string | null }[];
 }
 
+export interface ATSCategoryScores {
+  structure: number;
+  keywords: number;
+  skills: number;
+  experience: number;
+  projects: number;
+  education: number;
+  ats_compatibility: number;
+  contact_info: number;
+}
+
+export interface RecommendedRole {
+  role_name: string;
+  match_percentage: number;
+  why_matches: string[];
+  missing_skills: string[];
+}
+
+export interface ResumeImprovement {
+  current: string;
+  suggested: string;
+}
+
+export interface ComprehensiveATSAnalysis {
+  overall_score: number;
+  category_scores: ATSCategoryScores;
+  strengths: string[];
+  areas_to_improve: string[];
+  missing_keywords: string[];
+  resume_summary: string;
+  recommended_roles: RecommendedRole[];
+  actionable_improvements: string[];
+  suggested_changes: ResumeImprovement[];
+}
+
 export interface ATSReport {
   id: string;
   resume_id: string;
@@ -55,7 +91,7 @@ export interface ATSReport {
   formatting_score: number | null;
   section_score: number | null;
   missing_sections: string[] | null;
-  suggestions: { issue: string; recommendation: string; severity: string }[] | null;
+  suggestions: ComprehensiveATSAnalysis[] | { issue: string; recommendation: string; severity: string }[] | null;
   target_role_id: number | null;
 }
 
@@ -113,6 +149,7 @@ export interface PlacementPrediction {
 export interface Job {
   id: string;
   title: string;
+  company_name?: string | null;
   role_id: number | null;
   description: string | null;
   required_skills: string[] | null;

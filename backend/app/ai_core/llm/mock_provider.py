@@ -53,7 +53,8 @@ def _mock_value_for_field(field_name: str, annotation, rng: random.Random, conte
     args = get_args(annotation)
 
     # Optional[...] / Union[..., None]
-    if origin is typing.Union and type(None) in args:
+    import types
+    if origin in (typing.Union, types.UnionType) and type(None) in args:
         non_none = [a for a in args if a is not type(None)]
         return _mock_value_for_field(field_name, non_none[0], rng, context_text) if non_none else None
 

@@ -15,6 +15,7 @@ class StudentProfileOut(ORMBase):
     active_backlogs: int
     phone: str | None = None
     location: str | None = None
+    target_role: str | None = None
 
 
 class UserOut(ORMBase):
@@ -36,3 +37,4 @@ class ProfileUpdateIn(BaseModel):
     phone: str | None = None
     location: str | None = None
     full_name: str | None = None
+    target_role: str | None = None

@@ -19,7 +19,7 @@ export const uploadResume = (file: File) => {
   const form = new FormData();
   form.append("file", file);
   return unwrap<Resume>(
-    apiClient.post("/resumes", form, { headers: { "Content-Type": "multipart/form-data" } })
+    apiClient.post("/resumes", form)
   );
 };
 export const listResumes = () => unwrap<ResumeSummary[]>(apiClient.get("/resumes"));
@@ -28,7 +28,7 @@ export const getResumeStatus = (id: string) =>
   unwrap<{ id: string; parse_status: string }>(apiClient.get(`/resumes/${id}/status`));
 
 // --- ATS ---
-export const analyzeATS = (resumeId: string, targetRoleId: number) =>
+export const analyzeATS = (resumeId: string, targetRoleId?: number) =>
   unwrap<ATSReport>(apiClient.post("/ats/analyze", { resume_id: resumeId, target_role_id: targetRoleId }));
 export const getLatestATSReport = (resumeId: string) =>
   unwrap<ATSReport>(apiClient.get(`/ats/reports/${resumeId}`));

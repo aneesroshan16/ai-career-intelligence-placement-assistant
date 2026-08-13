@@ -16,6 +16,8 @@ import ResumeUploadPage from "@/pages/student/ResumeUpload";
 import RoadmapPage from "@/pages/student/Roadmap";
 import SkillGapPage from "@/pages/student/SkillGap";
 
+import TargetRoleSelectionPage from "@/pages/student/TargetRoleSelection";
+
 export default function App() {
   useAuthListener();
   const user = useAuthStore((s) => s.user);
@@ -30,6 +32,7 @@ export default function App() {
         <Route element={<Shell />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/resume" element={<ResumeUploadPage />} />
+          <Route path="/target-role" element={<TargetRoleSelectionPage />} />
           <Route path="/skills" element={<SkillGapPage />} />
           <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/placement" element={<PlacementPage />} />

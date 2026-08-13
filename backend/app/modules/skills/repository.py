@@ -15,6 +15,17 @@ class SkillsRepository:
         result = await self.session.execute(select(Role).order_by(Role.name))
         return list(result.scalars().all())
 
+    async def get_or_create_role(self, role_name: str) -> Role:
+        stmt = select(Role).where(Role.name == role_name)
+        result = await self.session.execute(stmt)
+        role = result.scalar_one_or_none()
+        if not role:
+            role = Role(name=role_name)
+            self.session.add(role)
+            await self.session.commit()
+            await self.session.refresh(role)
+        return role
+
     async def get_role_skills(self, role_id: int) -> list[RoleSkill]:
         stmt = (
             select(RoleSkill)

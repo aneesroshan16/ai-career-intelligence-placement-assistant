@@ -25,34 +25,62 @@ class RoadmapService:
         if gap_report is None:
             raise NotFoundError("Skill gap report not found")
 
-        missing_skill_names = [m["skill"] for m in gap_report.missing_skills]
-        matched_skill_names = [m["skill"] for m in gap_report.matched_skills]
-        
+        missing_skills = [m for m in gap_report.missing_skills]
         role = await self.session.get(Role, gap_report.role_id)
         role_name = role.name if role else "your target role"
 
-        prompt = (
-            f"Create a {weeks}-week personalized learning roadmap for a candidate transitioning to {role_name}. "
-            f"The candidate already possesses the following skills: {matched_skill_names}. "
-            f"Focus on closing the following skill gaps, ordered by priority: {missing_skill_names}. "
-            f"Leverage their existing knowledge to accelerate learning where possible. "
-            f"Include weekly focus skills, concrete tasks, estimated hours per week, and monthly milestones with deliverables."
-        )
-        messages = [
-            LLMMessage(
-                role="system",
-                content="You are an expert technical career mentor and curriculum designer specializing in AI, Data Science, and Computer Science careers."
-            ),
-            LLMMessage(role="user", content=prompt),
-        ]
-        generated: RoadmapPlanGeneration = await self.llm.complete_json(messages, RoadmapPlanGeneration)
+        # Deterministic Roadmap Generator based on prioritized gaps
+        plan = []
+        milestones = []
+        
+        if not missing_skills:
+            plan.append({
+                "week": 1,
+                "focus_skill": "Interview Prep",
+                "tasks": ["Review portfolio", "Mock interviews"],
+                "estimated_hours": 5,
+                "tasks_completed": [False, False]
+            })
+            milestones.append({"month": 1, "milestone": "Ready for Interviews", "deliverable": "Updated Resume"})
+        else:
+            import math
+            skills_per_week = max(1, math.ceil(len(missing_skills) / weeks))
+            current_skill_idx = 0
+            
+            for w in range(1, weeks + 1):
+                week_skills = missing_skills[current_skill_idx : current_skill_idx + skills_per_week]
+                
+                if week_skills:
+                    focus = week_skills[0]["skill"]
+                    tasks = [f"Learn fundamentals of {s['skill']}" for s in week_skills] + [f"Build a small project using {focus}"]
+                else:
+                    focus = "Advanced Practice & Revision"
+                    tasks = ["Solve related problems", "Revise previous concepts"]
+                    
+                plan.append({
+                    "week": w,
+                    "focus_skill": focus,
+                    "tasks": tasks,
+                    "estimated_hours": 10,
+                    "tasks_completed": [False] * len(tasks)
+                })
+                current_skill_idx += len(week_skills)
+                
+                if w % 4 == 0 or w == weeks:
+                    # Avoid duplicate milestones if weeks < 4
+                    if len(milestones) == 0 or milestones[-1]["month"] != max(1, w // 4):
+                        milestones.append({
+                            "month": max(1, w // 4),
+                            "milestone": f"Mastery of {focus}",
+                            "deliverable": f"Project integrating {focus}"
+                        })
 
         return await self.repo.create(
             skill_gap_report_id=gap_report.id,
             total_weeks=weeks,
-            plan=[p.model_dump() | {"tasks_completed": [False] * len(p.tasks)} for p in generated.plan],
-            milestones=[m.model_dump() for m in generated.milestones],
-            generated_by=self.settings.LLM_PROVIDER,
+            plan=plan,
+            milestones=milestones,
+            generated_by="deterministic_engine",
         )
 
     async def get(self, roadmap_id: str) -> Roadmap:

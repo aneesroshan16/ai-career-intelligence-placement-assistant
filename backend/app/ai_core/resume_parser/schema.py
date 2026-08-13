@@ -10,6 +10,15 @@ class ParsedEducation(BaseModel):
     gpa: float | None = None
 
 
+class ParsedExperience(BaseModel):
+    company: str
+    role: str | None = None
+    description: str | None = None
+    start_year: int | None = None
+    end_year: int | None = None
+    is_current: bool = False
+
+
 class ParsedProject(BaseModel):
     title: str
     description: str | None = None
@@ -28,10 +37,19 @@ class ParsedSkill(BaseModel):
 
 
 class ParsedResume(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    github_url: str | None = None
+    linkedin_url: str | None = None
+    portfolio_url: str | None = None
+    
     raw_text: str
     skills: list[ParsedSkill] = []
     education: list[ParsedEducation] = []
+    experience: list[ParsedExperience] = []
     projects: list[ParsedProject] = []
     certifications: list[ParsedCertification] = []
+    achievements: list[str] = []
     emails: list[str] = []
     phones: list[str] = []

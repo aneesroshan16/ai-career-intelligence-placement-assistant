@@ -57,7 +57,8 @@ async def _decode_supabase_jwt(token: str) -> dict:
                 settings.SUPABASE_JWT_SECRET, 
                 algorithms=["HS256"], 
                 audience="authenticated", 
-                options={"verify_aud": True}
+                options={"verify_aud": True},
+                leeway=60
             )
             
         jwks = await _get_jwks()
@@ -65,22 +66,18 @@ async def _decode_supabase_jwt(token: str) -> dict:
         if key is None:
             print(f"JWT Error: Unknown signing key. Header: {header}")
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown signing key")
-        public_key = jwt.algorithms.RSAAlgorithm.from_jwk(key)
+        
+        public_key = jwt.PyJWK(key).key
+        alg = header.get("alg", "RS256")
         payload = jwt.decode(
-            token, public_key, algorithms=["RS256"],
+            token, public_key, algorithms=[alg],
             audience="authenticated", options={"verify_aud": True},
+            leeway=60
         )
         return payload
     except jwt.PyJWTError as exc:
         print(f"JWT Decode Error: {exc}")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {exc}") from exc
-
-
-def _decode_dev_jwt(token: str) -> dict:
-    try:
-        return jwt.decode(token, settings.DEV_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
-    except jwt.PyJWTError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid dev token: {exc}") from exc
 
 
 async def get_current_claims(
@@ -89,8 +86,6 @@ async def get_current_claims(
     if credentials is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     token = credentials.credentials
-    if settings.AUTH_MODE == "dev":
-        return _decode_dev_jwt(token)
     return await _decode_supabase_jwt(token)
 
 

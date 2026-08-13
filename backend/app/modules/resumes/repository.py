@@ -23,6 +23,7 @@ class ResumeRepository:
             selectinload(Resume.education),
             selectinload(Resume.projects),
             selectinload(Resume.certifications),
+            selectinload(Resume.experience),
         )
 
     async def create(self, user_id: str, file_url: str, file_type: str, original_filename: str) -> Resume:
@@ -104,4 +105,15 @@ class ResumeRepository:
         await self.session.execute(
             update(Resume).where(Resume.id == uuid.UUID(resume_id)).values(is_active=False)
         )
+        await self.session.commit()
+
+    async def create_feedback(self, resume_id: str, feedback_data: dict) -> None:
+        from app.modules.resumes.models import ResumeFeedback
+        rid = uuid.UUID(resume_id)
+        # Delete existing feedback if any (should be 1-to-1 but just in case)
+        from sqlalchemy import delete
+        await self.session.execute(delete(ResumeFeedback).where(ResumeFeedback.resume_id == rid))
+        
+        feedback = ResumeFeedback(resume_id=rid, **feedback_data)
+        self.session.add(feedback)
         await self.session.commit()

@@ -10,8 +10,8 @@ from app.modules.roadmap.service import RoadmapService
 
 async def main():
     async with AsyncSessionLocal() as session:
-        # Get first resume
-        result = await session.execute(select(Resume).limit(1))
+        # Get the latest uploaded resume
+        result = await session.execute(select(Resume).order_by(Resume.created_at.desc()).limit(1))
         resume = result.scalar_one_or_none()
         if not resume:
             print("No resumes found in the database. Please upload one first.")
@@ -52,7 +52,7 @@ async def main():
         roadmap = await roadmap_service.generate(str(gap_report.id), weeks=4)
         print(f"Roadmap generated successfully for {roadmap.total_weeks} weeks!")
         for week in roadmap.plan[:2]:
-            print(f"  Week {week.get('week')}: Focus -> {', '.join(week.get('focus_skills', []))}")
+            print(f"  Week {week.get('week')}: Focus -> {week.get('focus_skill', 'N/A')}")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -94,21 +94,36 @@ class ATSService:
         result: ATSSuggestionSet = await self.llm.complete_json(messages, ATSSuggestionSet)
         return [s.model_dump() for s in result.suggestions]
 
-    async def analyze(self, resume_id: str, target_role_id: int) -> ATSReport:
+    async def analyze(self, resume_id: str, target_role_id: int | None = None) -> ATSReport:
         resume = await self.resume_repo.get_by_id(resume_id)
-        raw_text = resume.raw_text or ""
+        raw_text = resume.raw_text or " ".join(s.raw_text for s in resume.skills)
 
         formatting_score = self._formatting_score(raw_text)
         section_score, missing_sections = self._section_score_and_missing(raw_text)
-        keyword_score = await self._keyword_score(resume, target_role_id)
-
-        from app.modules.skills.models import Role
-        role = await self.session.get(Role, target_role_id)
-        role_name = role.name if role else "specific"
+        
+        role_name = "general industry standards"
+        keyword_score = 50.0
+        
+        if target_role_id is None:
+            # Try to infer a top role using deterministic SkillsService
+            from app.modules.skills.service import SkillsService
+            skills_service = SkillsService(self.session)
+            recommended = await skills_service.recommend_roles(resume_id)
+            if recommended and hasattr(recommended[0], "id"):
+                target_role_id = recommended[0].id
+                role_name = recommended[0].name
+                keyword_score = await self._keyword_score(resume, target_role_id)
+        else:
+            keyword_score = await self._keyword_score(resume, target_role_id)
+            from app.modules.skills.models import Role
+            role = await self.session.get(Role, target_role_id)
+            if role:
+                role_name = role.name
 
         overall_score = round(
             0.45 * keyword_score + 0.30 * section_score + 0.25 * formatting_score, 2
         )
+        
         suggestions = await self._generate_suggestions(missing_sections, keyword_score, raw_text, role_name)
 
         return await self.repo.create(

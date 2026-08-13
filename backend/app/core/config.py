@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # --- Database ---
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/career_intel"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/career_intel"
 
     # --- Supabase ---
     SUPABASE_URL: str = "https://your-project.supabase.co"

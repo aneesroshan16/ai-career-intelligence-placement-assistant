@@ -19,6 +19,7 @@ class ATSReport(Base):
     section_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     missing_sections: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     suggestions: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    recommended_roles: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     target_role_id: Mapped[int | None] = mapped_column(ForeignKey("roles.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 

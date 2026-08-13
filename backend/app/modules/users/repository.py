@@ -16,6 +16,11 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_email(self, email: str) -> User | None:
+        stmt = select(User).where(User.email == email).options(selectinload(User.profile))
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def create(self, user_id: str, email: str, full_name: str = "") -> User:
         user = User(id=uuid.UUID(user_id), email=email, full_name=full_name or email.split("@")[0])
         self.session.add(user)

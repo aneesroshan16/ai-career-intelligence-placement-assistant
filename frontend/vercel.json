@@ -5,7 +5,7 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "build": {
     "env": {
-      "VITE_API_BASE_URL": "https://ai-career-intelligence-placement-zoa5.onrender.com/api/v1"
+      "VITE_API_BASE_URL": "https://career-intel-backend.onrender.com/api/v1"
     }
   }
 }

@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/form-elements";
-import { signInWithEmail, signInWithGoogle, isSupabaseConfigured, getOrCreateDevUserId } from "@/lib/supabaseClient";
-import { devLogin } from "@/lib/api/authModules";
+import { signInWithEmail, signInWithGoogle } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
@@ -14,6 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const authError = useAuthStore((s) => s.authError);
 
   useEffect(() => {
     if (user) {
@@ -21,35 +21,23 @@ export default function LoginPage() {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+      setLoading(false);
+    }
+  }, [authError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     const { error: signInError } = await signInWithEmail(email, password);
-    setLoading(false);
     if (signInError) {
+      setLoading(false);
       setError(signInError.message);
     }
   };
-
-  const handleDevLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await devLogin({
-        user_id: getOrCreateDevUserId(),
-        email: email || "dev-student@example.com",
-        role: "student",
-      });
-      // The useEffect will navigate on success
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
-      setLoading(false);
-    }
-  };
-
-  const onSubmit = isSupabaseConfigured ? handleSubmit : handleDevLogin;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
@@ -59,7 +47,7 @@ export default function LoginPage() {
           <CardDescription>Sign in to your Career Intelligence account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

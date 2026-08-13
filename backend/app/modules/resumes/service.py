@@ -49,9 +49,9 @@ class ResumeService:
         try:
             raw_text = extract_text(file_bytes, file_type)
             known_skills = await self._known_skills()
-            parsed = self.parser.parse(raw_text, known_skills=known_skills)
+            parsed = await self.parser.parse(raw_text, known_skills=known_skills)
             await self.repo.persist_parsed_entities(str(resume.id), parsed, raw_text)
-        except ResumeParseError:
+        except Exception:
             await self.repo.set_status(str(resume.id), "failed")
             raise
 
