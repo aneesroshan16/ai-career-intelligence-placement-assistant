@@ -1,15 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai_core.llm.base import LLMMessage
 from app.ai_core.llm.factory import get_llm_provider
 from app.core.config import get_settings
 from app.core.exceptions import NotFoundError
 from app.modules.roadmap.models import Roadmap
 from app.modules.roadmap.repository import RoadmapRepository
-from app.modules.roadmap.schemas import RoadmapPlanGeneration
 from app.modules.skills.repository import SkillsRepository
 from app.modules.skills.models import Role
-from app.modules.resumes.models import Resume
 from app.modules.skills.catalog import metadata_for
 
 

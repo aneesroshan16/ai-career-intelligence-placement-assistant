@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const authCallbackUrl = `${window.location.origin}/auth/callback`;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -32,7 +33,11 @@ export async function signUpWithEmail(email: string, password: string, fullName:
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      // Supabase must allow this URL in Authentication > URL Configuration.
+      emailRedirectTo: authCallbackUrl,
+    },
   });
 }
 
@@ -45,7 +50,9 @@ export async function signInWithGoogle() {
   if (!isSupabaseConfigured) throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.");
   return supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${window.location.origin}/dashboard` },
+    // OAuth and email confirmation both return here so the SDK can exchange
+    // the callback code before protected routes request the backend profile.
+    options: { redirectTo: authCallbackUrl },
   });
 }
 

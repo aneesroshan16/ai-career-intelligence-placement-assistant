@@ -27,6 +27,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/auth/callback" element={<Navigate to={defaultRoute} replace />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Shell />}>

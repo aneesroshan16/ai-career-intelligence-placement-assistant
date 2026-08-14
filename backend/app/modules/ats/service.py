@@ -40,9 +40,9 @@ class ATSService:
     def _formatting_score(self, raw_text: str) -> float:
         if not raw_text:
             return 0.0
-        lines = [l for l in raw_text.split("\n") if l.strip()]
-        bullet_lines = sum(1 for l in lines if l.strip().startswith(("-", "•", "*")))
-        avg_line_len = sum(len(l) for l in lines) / max(len(lines), 1)
+        lines = [line for line in raw_text.split("\n") if line.strip()]
+        bullet_lines = sum(1 for line in lines if line.strip().startswith(("-", "•", "*")))
+        avg_line_len = sum(len(line) for line in lines) / max(len(lines), 1)
 
         score = 60.0
         score += min(20.0, bullet_lines * 1.5)          # bullet usage is ATS-friendly

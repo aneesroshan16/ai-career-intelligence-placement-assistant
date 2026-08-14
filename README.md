@@ -141,7 +141,10 @@ not being set — both are fixed below.
    the backend folder and its entry point (`app/main.py` → `uvicorn app.main:app`,
    baked into the Dockerfile's `CMD`) actually get found.
 4. Fill in the secret env vars Render prompts for (`DATABASE_URL`, `SUPABASE_URL`,
-   `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`) and click **Apply**.
+   `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`) and set `CORS_ORIGINS` to a
+   JSON array containing your Vercel origin, for example
+   `["https://your-project.vercel.app"]`. `AUTH_MODE` must remain `supabase` in
+   production. Click **Apply**.
 
 **Option B — Manual Web Service, no Docker (simplest, fewer moving parts)**
 If Docker builds keep failing or timing out on Render's free/starter tier, skip
@@ -169,12 +172,16 @@ instead of `backend/`.
    `package.json` — this is the equivalent mistake to Render's Root Directory issue).
 3. Framework preset: Vite (auto-detected via `frontend/vercel.json`).
 4. Env vars: `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+   Set `VITE_API_BASE_URL` to `https://<your-render-service>.onrender.com/api/v1`.
 
 ### Database + Auth + Storage → Supabase
 Create a project, run `alembic upgrade head` from `backend/` against its Postgres
 connection string (converted to the `postgresql+asyncpg://` scheme), enable Email +
 Google providers under Authentication, and create a private Storage bucket named
-`resumes`.
+`resumes`. In **Authentication > URL Configuration**, set the Site URL to the Vercel
+deployment and add `https://<your-project>.vercel.app/auth/callback` (and
+`http://localhost:5173/auth/callback` for development) to Redirect URLs. In Google
+Cloud, configure the OAuth callback URL Supabase displays for your project.
 
 ### If Render still can't find the backend after Option A or B
 This almost always means the **GitHub repo's actual folder layout doesn't match

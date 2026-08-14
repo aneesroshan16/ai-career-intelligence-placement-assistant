@@ -123,8 +123,6 @@ class MockLLMProvider(LLMProvider):
         temperature: float = 0.7,
         max_tokens: int = 1024,
     ) -> LLMResponse:
-        seed = _seed_from_messages(messages)
-        rng = random.Random(seed)
         last_user = next((m.content for m in reversed(messages) if m.role == "user"), "")
         snippet = last_user[:80].replace("\n", " ")
         text = (

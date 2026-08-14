@@ -30,7 +30,7 @@ services:
       - key: SUPABASE_STORAGE_BUCKET
         value: resumes
       - key: AUTH_MODE
-        value: dev
+        value: supabase
       - key: LLM_PROVIDER
         value: mock # switch to "openai" or "gemini" once keys are configured
       - key: OPENAI_API_KEY
@@ -38,7 +38,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        value: '["https://frontend-eight-omega-61.vercel.app"]'
+        sync: false # JSON array containing the deployed Vercel URL(s)
       - key: LOG_LEVEL
         value: INFO
     autoDeploy: true

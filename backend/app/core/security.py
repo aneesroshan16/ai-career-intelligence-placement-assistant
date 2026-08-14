@@ -112,7 +112,13 @@ async def get_current_user(request: Request, claims: dict = Depends(get_current_
 
     async with AsyncSessionLocal() as session:
         service = UserService(session)
-        db_user = await service.get_or_create_from_claims(user_id=user_id, email=email)
+        metadata = claims.get("user_metadata") or {}
+        full_name = metadata.get("full_name") or metadata.get("name") or ""
+        db_user = await service.get_or_create_from_claims(
+            user_id=user_id,
+            email=email,
+            full_name=full_name,
+        )
 
     user = AuthenticatedUser(id=str(db_user.id), email=db_user.email, role=db_user.role)
     request.state.user = user

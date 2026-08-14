@@ -9,7 +9,7 @@ class UserService:
         self.session = session
         self.repo = UserRepository(session)
 
-    async def get_or_create_from_claims(self, user_id: str, email: str) -> User:
+    async def get_or_create_from_claims(self, user_id: str, email: str, full_name: str = "") -> User:
         """
         Called from core.security.get_current_user on every authenticated
         request. Since Supabase Auth owns identity, the backend never has an
@@ -21,7 +21,7 @@ class UserService:
             user_by_email = await self.repo.get_by_email(email)
             if user_by_email:
                 return user_by_email
-            user = await self.repo.create(user_id=user_id, email=email)
+            user = await self.repo.create(user_id=user_id, email=email, full_name=full_name)
         return user
 
     async def update_profile(self, user_id: str, **fields):

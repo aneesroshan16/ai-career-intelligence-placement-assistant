@@ -113,7 +113,6 @@ class InterviewService:
         if interview is None:
             raise NotFoundError("Interview session not found")
         if interview.status == "in_progress":
-            last_turn = max(interview.turns, key=lambda t: t.turn_number)
             fallback_feedback = TurnFeedback(clarity=5, correctness=5, confidence=5, tips=["Session ended early."])
             await self._finalize(interview, fallback_feedback)
         return await self.repo.get_session(session_id)
