@@ -5,7 +5,7 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "env": {
     "VITE_API_BASE_URL": "PLACEHOLDER_WAITING_FOR_RENDER_URL",
-    "VITE_SUPABASE_URL": "https://drsnplvevedcwzssehrn.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyc25wbHZldmVkY3d6c3NlaHJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTMwNTIsImV4cCI6MjA5OTc2OTA1Mn0.KJGLskBbYYvD6gixsQ6PWWipsIrmfTjNGr5K4M_4rNg"
+    "VITE_SUPABASE_URL": "PLACEHOLDER_WAITING_FOR_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY": "PLACEHOLDER_WAITING_FOR_SUPABASE_ANON_KEY"
   }
 }

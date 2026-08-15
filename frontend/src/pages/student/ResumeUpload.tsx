@@ -155,7 +155,11 @@ export default function ResumeUploadPage() {
                 <Badge variant={activeResume.parse_status === "completed" ? "success" : "warning"}>
                   {activeResume.parse_status === "completed" ? "Ready for Analysis" : "Parsing..."}
                 </Badge>
-                <Button variant="outline" size="sm" onClick={() => alert("Preview relies on secure backend URL mapping. Opening viewer...")}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => activeResume.file_url ? window.open(activeResume.file_url, "_blank") : alert("Resume file URL not available.")}
+                >
                   View Resume
                 </Button>
                 <Button 

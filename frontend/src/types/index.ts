@@ -37,6 +37,7 @@ export interface ResumeSummary {
   original_filename: string;
   parse_status: "pending" | "processing" | "completed" | "failed";
   is_active: boolean;
+  file_url?: string | null;
 }
 
 export interface Resume extends ResumeSummary {
