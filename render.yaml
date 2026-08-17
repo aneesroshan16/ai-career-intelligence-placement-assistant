@@ -38,7 +38,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        sync: false # JSON array containing the deployed Vercel URL(s)
+        value: '["https://frontend-eight-omega-61.vercel.app"]' # Updated for your deployed Vercel URL
       - key: LOG_LEVEL
         value: INFO
     autoDeploy: true
