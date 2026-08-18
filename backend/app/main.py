@@ -95,6 +95,14 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "ok", "service": settings.APP_NAME, "environment": settings.ENVIRONMENT}
 
+    @app.get("/", tags=["System"])
+    async def root():
+        return {
+            "message": "Welcome to the AI Career Intelligence Placement Assistant API",
+            "docs_url": "/docs",
+            "health_url": "/health"
+        }
+
     return app
 
 
