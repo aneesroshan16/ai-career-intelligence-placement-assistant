@@ -11,7 +11,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    proxy: {
+    // Only use proxy in local development, let Vercel handle production directly
+    proxy: process.env.VERCEL ? {} : {
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
