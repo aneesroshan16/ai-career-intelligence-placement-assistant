@@ -55,7 +55,6 @@ class ResumeOut(ORMBase):
     original_filename: str
     parse_status: str
     is_active: bool
-    file_url: str | None = None
     
     name: str | None = None
     email: str | None = None
@@ -78,7 +77,6 @@ class ResumeSummaryOut(ORMBase):
     original_filename: str
     parse_status: str
     is_active: bool
-    file_url: str | None = None
 
 
 class ResumeStatusOut(BaseModel):

@@ -46,10 +46,8 @@ class InterviewService:
         await self.repo.add_turn(session_id=interview.id, turn_number=1, question=first_question)
         return interview, first_question
 
-    async def submit_answer(self, session_id: str, answer: str) -> dict:
-        interview = await self.repo.get_session(session_id)
-        if interview is None:
-            raise NotFoundError("Interview session not found")
+    async def submit_answer(self, session_id: str, user_id: str, answer: str) -> dict:
+        interview = await self.get_for_user(session_id, user_id)
         if interview.status != "in_progress":
             raise ValidationFailedError("This interview session has already ended.")
 
@@ -108,10 +106,8 @@ class InterviewService:
         await self.repo.complete_session(str(interview.id), overall_feedback, avg_score)
         return {"feedback": last_feedback, "next_question": None, "session_status": "completed"}
 
-    async def complete_session(self, session_id: str) -> InterviewSession:
-        interview = await self.repo.get_session(session_id)
-        if interview is None:
-            raise NotFoundError("Interview session not found")
+    async def complete_session(self, session_id: str, user_id: str) -> InterviewSession:
+        interview = await self.get_for_user(session_id, user_id)
         if interview.status == "in_progress":
             fallback_feedback = TurnFeedback(clarity=5, correctness=5, confidence=5, tips=["Session ended early."])
             await self._finalize(interview, fallback_feedback)
@@ -120,6 +116,13 @@ class InterviewService:
     async def get(self, session_id: str) -> InterviewSession:
         interview = await self.repo.get_session(session_id)
         if interview is None:
+            raise NotFoundError("Interview session not found")
+        return interview
+
+    async def get_for_user(self, session_id: str, user_id: str) -> InterviewSession:
+        interview = await self.get(session_id)
+        if str(interview.user_id) != user_id:
+            # Avoid disclosing another user's session ID.
             raise NotFoundError("Interview session not found")
         return interview
 

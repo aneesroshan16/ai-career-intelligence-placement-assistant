@@ -173,6 +173,12 @@ instead of `backend/`.
 3. Framework preset: Vite (auto-detected via `frontend/vercel.json`).
 4. Env vars: `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
    Set `VITE_API_BASE_URL` to `https://<your-render-service>.onrender.com/api/v1`.
+   `VITE_SUPABASE_URL` must be exactly the same Supabase project URL used by the
+   backend's `SUPABASE_URL`; it must not be an API URL, dashboard URL, placeholder,
+   or a different Supabase project. These `VITE_` values are embedded at build time,
+   so redeploy Vercel after changing them. Run `npm run validate:auth-config` from
+   `frontend/` before a local build to check the public auth configuration without
+   printing any keys.
 
 ### Database + Auth + Storage → Supabase
 Create a project, run `alembic upgrade head` from `backend/` against its Postgres
@@ -182,6 +188,12 @@ Google providers under Authentication, and create a private Storage bucket named
 deployment and add `https://<your-project>.vercel.app/auth/callback` (and
 `http://localhost:5173/auth/callback` for development) to Redirect URLs. In Google
 Cloud, configure the OAuth callback URL Supabase displays for your project.
+That Google redirect URI has the form
+`https://<project-ref>.supabase.co/auth/v1/callback`; it is not the Vercel callback
+URL. For OAuth-enabled Vercel previews, add each intended preview origin's exact
+`/auth/callback` URL in Supabase too. Keep Render's `CORS_ORIGINS` as a JSON array
+of the Vercel origin(s) and `AUTH_MODE=supabase`; never add the backend service-role
+key or JWT secret to Vercel or to a `VITE_` variable.
 
 ### If Render still can't find the backend after Option A or B
 This almost always means the **GitHub repo's actual folder layout doesn't match

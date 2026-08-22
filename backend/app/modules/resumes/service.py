@@ -39,10 +39,10 @@ class ResumeService:
                 raise ResumeParseError("Only PDF and DOCX resumes are supported.")
 
         stored_path = await self.storage.upload(file_bytes, filename, content_type)
-        file_url = self.storage.get_url(stored_path)
-
         resume = await self.repo.create(
-            user_id=user_id, file_url=file_url, file_type=file_type, original_filename=filename
+            # Keep the private storage path in the database. A signed URL is generated
+            # only for the authenticated owner when they explicitly request a download.
+            user_id=user_id, file_url=stored_path, file_type=file_type, original_filename=filename
         )
 
         await self.repo.set_status(str(resume.id), "processing")
@@ -62,6 +62,17 @@ class ResumeService:
         if resume is None:
             raise NotFoundError("Resume not found")
         return resume
+
+    async def get_for_user(self, resume_id: str, user_id: str) -> Resume:
+        resume = await self.get(resume_id)
+        if str(resume.user_id) != user_id:
+            # Do not reveal whether another user's resume ID exists.
+            raise NotFoundError("Resume not found")
+        return resume
+
+    async def get_download_url(self, resume_id: str, user_id: str) -> str:
+        resume = await self.get_for_user(resume_id, user_id)
+        return await self.storage.get_download_url(resume.file_url)
 
     async def list_for_user(self, user_id: str) -> list[Resume]:
         return await self.repo.list_by_user(user_id)

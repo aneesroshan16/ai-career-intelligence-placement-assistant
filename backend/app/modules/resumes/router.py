@@ -40,11 +40,11 @@ async def list_resumes(
 async def get_resume(
     resume_id: str,
     request: Request,
-    _: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = ResumeService(db)
-    resume = await service.get(resume_id)
+    resume = await service.get_for_user(resume_id, user.id)
     return success_envelope(ResumeOut.model_validate(resume), request)
 
 
@@ -52,21 +52,34 @@ async def get_resume(
 async def get_resume_status(
     resume_id: str,
     request: Request,
-    _: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = ResumeService(db)
-    resume = await service.get(resume_id)
+    resume = await service.get_for_user(resume_id, user.id)
     return success_envelope(ResumeStatusOut(id=resume.id, parse_status=resume.parse_status), request)
+
+
+@router.get("/{resume_id}/download-url")
+async def get_resume_download_url(
+    resume_id: str,
+    request: Request,
+    user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = ResumeService(db)
+    download_url = await service.get_download_url(resume_id, user.id)
+    return success_envelope({"url": download_url}, request)
 
 
 @router.delete("/{resume_id}")
 async def delete_resume(
     resume_id: str,
     request: Request,
-    _: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = ResumeService(db)
+    await service.get_for_user(resume_id, user.id)
     await service.delete(resume_id)
     return success_envelope({"deleted": True}, request)

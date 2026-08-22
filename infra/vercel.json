@@ -2,10 +2,5 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "env": {
-    "VITE_API_BASE_URL": "PLACEHOLDER_WAITING_FOR_RENDER_URL",
-    "VITE_SUPABASE_URL": "PLACEHOLDER_WAITING_FOR_SUPABASE_URL",
-    "VITE_SUPABASE_ANON_KEY": "PLACEHOLDER_WAITING_FOR_SUPABASE_ANON_KEY"
-  }
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

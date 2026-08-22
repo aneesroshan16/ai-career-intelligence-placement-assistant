@@ -34,11 +34,11 @@ async def submit_answer(
     session_id: str,
     payload: AnswerIn,
     request: Request,
-    _: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = InterviewService(db)
-    result = await service.submit_answer(session_id, payload.answer)
+    result = await service.submit_answer(session_id, user.id, payload.answer)
     return success_envelope(result, request)
 
 
@@ -46,11 +46,11 @@ async def submit_answer(
 async def complete_session(
     session_id: str,
     request: Request,
-    _: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = InterviewService(db)
-    interview = await service.complete_session(session_id)
+    interview = await service.complete_session(session_id, user.id)
     return success_envelope(InterviewSessionDetailOut.model_validate(interview), request)
 
 
@@ -69,9 +69,9 @@ async def list_sessions(
 async def get_session(
     session_id: str,
     request: Request,
-    _: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     service = InterviewService(db)
-    interview = await service.get(session_id)
+    interview = await service.get_for_user(session_id, user.id)
     return success_envelope(InterviewSessionDetailOut.model_validate(interview), request)

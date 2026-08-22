@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, Progress } from "@/components/ui/form-elements";
-import { analyzeATS, listResumes, uploadResume, getLatestATSReport, getMe, listRoles } from "@/lib/api/resumeModules";
+import { analyzeATS, listResumes, uploadResume, getLatestATSReport, getMe, listRoles, getResumeDownloadUrl } from "@/lib/api/resumeModules";
 import { CheckCircle2, AlertTriangle, FileText, Search, ArrowRight, UploadCloud, XCircle, Sparkles } from "lucide-react";
 import type { ComprehensiveATSAnalysis, ResumeSummary } from "@/types";
 import { motion } from "framer-motion";
@@ -71,6 +71,16 @@ export default function ResumeUploadPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) uploadMutation.mutate(file);
+  };
+
+  const handleViewResume = async () => {
+    if (!activeResume) return;
+    try {
+      const { url } = await getResumeDownloadUrl(activeResume.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      alert("Your resume could not be opened. Please try again later.");
+    }
   };
 
   const comprehensiveAnalysis: ComprehensiveATSAnalysis | null = 
@@ -158,7 +168,7 @@ export default function ResumeUploadPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => activeResume.file_url ? window.open(activeResume.file_url, "_blank") : alert("Resume file URL not available.")}
+                  onClick={handleViewResume}
                 >
                   View Resume
                 </Button>

@@ -26,6 +26,8 @@ export const listResumes = () => unwrap<ResumeSummary[]>(apiClient.get("/resumes
 export const getResume = (id: string) => unwrap<Resume>(apiClient.get(`/resumes/${id}`));
 export const getResumeStatus = (id: string) =>
   unwrap<{ id: string; parse_status: string }>(apiClient.get(`/resumes/${id}/status`));
+export const getResumeDownloadUrl = (id: string) =>
+  unwrap<{ url: string }>(apiClient.get(`/resumes/${id}/download-url`));
 
 // --- ATS ---
 export const analyzeATS = (resumeId: string, targetRoleId?: number) =>

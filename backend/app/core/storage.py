@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import uuid
 from abc import ABC, abstractmethod
+from urllib.parse import quote, urlparse
 
 from app.core.config import get_settings
 
@@ -20,7 +21,7 @@ class StorageProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_url(self, stored_path: str) -> str:
+    async def get_download_url(self, stored_path: str, expires_in: int = 60) -> str:
         raise NotImplementedError
 
 
@@ -36,7 +37,7 @@ class LocalStorageProvider(StorageProvider):
             f.write(file_bytes)
         return path
 
-    def get_url(self, stored_path: str) -> str:
+    async def get_download_url(self, stored_path: str, expires_in: int = 60) -> str:
         return f"file://{os.path.abspath(stored_path)}"
 
 
@@ -62,8 +63,28 @@ class SupabaseStorageProvider(StorageProvider):
             resp.raise_for_status()
         return object_path
 
-    def get_url(self, stored_path: str) -> str:
-        return f"{self.base_url}/storage/v1/object/public/{stored_path}"
+    async def get_download_url(self, stored_path: str, expires_in: int = 60) -> str:
+        import httpx
+
+        prefix = f"{self.bucket}/"
+        if stored_path.startswith(prefix):
+            object_name = stored_path[len(prefix):]
+        else:
+            marker = f"/storage/v1/object/public/{self.bucket}/"
+            path = urlparse(stored_path).path
+            if marker not in path:
+                raise ValueError("Stored resume path does not belong to the configured bucket.")
+            object_name = path.split(marker, 1)[1]
+
+        url = f"{self.base_url}/storage/v1/object/sign/{self.bucket}/{quote(object_name, safe='/')}"
+        headers = {"Authorization": f"Bearer {self.key}", "apikey": self.key}
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, headers=headers, json={"expiresIn": expires_in})
+            response.raise_for_status()
+        signed_url = response.json().get("signedURL")
+        if not signed_url:
+            raise ValueError("Storage did not return a signed download URL.")
+        return signed_url if signed_url.startswith("http") else f"{self.base_url}{signed_url}"
 
 
 def get_storage_provider() -> StorageProvider:

@@ -7,6 +7,7 @@ import AdminDashboardPage from "@/pages/admin/AdminDashboard";
 import AnalyticsPage from "@/pages/analytics/AnalyticsPage";
 import LoginPage from "@/pages/auth/Login";
 import SignupPage from "@/pages/auth/Signup";
+import AuthCallbackPage from "@/pages/auth/AuthCallback";
 import AssessmentsPage from "@/pages/student/Assessments";
 import DashboardPage from "@/pages/student/Dashboard";
 import InterviewPage from "@/pages/student/Interview";
@@ -27,7 +28,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/auth/callback" element={<Navigate to={defaultRoute} replace />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Shell />}>
