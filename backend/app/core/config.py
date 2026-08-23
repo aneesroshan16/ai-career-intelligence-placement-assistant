@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     DEV_JWT_SECRET: str = "dev-only-secret-do-not-use-in-prod"
 
     # --- AI Providers ---
-    LLM_PROVIDER: str = "mock"  # mock | openai | gemini
+    LLM_PROVIDER: str = "openai"  # mock | openai | gemini
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     GEMINI_API_KEY: str = ""
