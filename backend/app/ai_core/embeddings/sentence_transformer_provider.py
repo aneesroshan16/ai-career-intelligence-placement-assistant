@@ -17,15 +17,21 @@ from app.core.config import get_settings
 
 class SentenceTransformerProvider(EmbeddingProvider):
     def __init__(self, model_name: str, dimension: int):
-        from sentence_transformers import SentenceTransformer  # lazy import — heavy dependency
-
-        self._model = SentenceTransformer(model_name)
+        self.model_name = model_name
+        self._model = None
         self._dimension = dimension
+
+    def _get_model(self):
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer  # lazy import
+            self._model = SentenceTransformer(self.model_name)
+        return self._model
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        vectors = self._model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+        model = self._get_model()
+        vectors = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
         return vectors.tolist()
 
     @property
