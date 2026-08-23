@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, Progress } from "@/components/ui/form-elements";
-import { analyzeATS, listResumes, uploadResume, getLatestATSReport, getMe, listRoles, getResumeDownloadUrl } from "@/lib/api/resumeModules";
+import { analyzeATS, listResumes, uploadResume, getLatestATSReport, getMe, listRoles } from "@/lib/api/resumeModules";
 import { CheckCircle2, AlertTriangle, FileText, Search, ArrowRight, UploadCloud, XCircle, Sparkles } from "lucide-react";
 import type { ComprehensiveATSAnalysis, ResumeSummary } from "@/types";
 import { motion } from "framer-motion";
@@ -73,15 +73,7 @@ export default function ResumeUploadPage() {
     if (file) uploadMutation.mutate(file);
   };
 
-  const handleViewResume = async () => {
-    if (!activeResume) return;
-    try {
-      const { url } = await getResumeDownloadUrl(activeResume.id);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      alert("Your resume could not be opened. Please try again later.");
-    }
-  };
+
 
   const comprehensiveAnalysis: ComprehensiveATSAnalysis | null = 
     latestReport?.suggestions && latestReport.suggestions.length > 0 && 'category_scores' in latestReport.suggestions[0] 
@@ -165,13 +157,7 @@ export default function ResumeUploadPage() {
                 <Badge variant={activeResume.parse_status === "completed" ? "success" : "warning"}>
                   {activeResume.parse_status === "completed" ? "Ready for Analysis" : "Parsing..."}
                 </Badge>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleViewResume}
-                >
-                  View Resume
-                </Button>
+
                 <Button 
                   variant="default" 
                   size="sm" 
