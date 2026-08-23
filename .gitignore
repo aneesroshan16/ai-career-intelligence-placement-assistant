@@ -23,6 +23,7 @@ secrets.json
 # --- ML artifacts (keep metadata, ignore large binaries if regenerated) ---
 backend/app/ml_core/artifacts/*.pkl
 backend/app/ml_core/artifacts/*.cbm
+!backend/app/ml_core/artifacts/placement_model_v1.cbm
 backend/app/ml_core/artifacts/faiss_*.index
 
 # --- Uploads ---
