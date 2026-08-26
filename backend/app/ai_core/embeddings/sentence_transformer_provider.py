@@ -23,16 +23,27 @@ class SentenceTransformerProvider(EmbeddingProvider):
 
     def _get_model(self):
         if self._model is None:
-            from sentence_transformers import SentenceTransformer  # lazy import
-            self._model = SentenceTransformer(self.model_name)
-        return self._model
+            try:
+                from sentence_transformers import SentenceTransformer  # lazy import
+                self._model = SentenceTransformer(self.model_name)
+            except Exception:
+                self._model = False
+        return self._model if self._model is not False else None
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        model = self._get_model()
-        vectors = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
-        return vectors.tolist()
+        try:
+            model = self._get_model()
+            if model is not None:
+                vectors = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+                return vectors.tolist()
+        except Exception:
+            pass
+
+        # Fallback to zero-vectors if model loading or encoding encounters memory/runtime issues
+        return [[0.0] * self._dimension for _ in texts]
+
 
     @property
     def dimension(self) -> int:

@@ -23,7 +23,8 @@ export class ApiError extends Error {
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
-export const apiClient: AxiosInstance = axios.create({ baseURL, timeout: 30000 });
+export const apiClient: AxiosInstance = axios.create({ baseURL, timeout: 60000 });
+
 
 apiClient.interceptors.request.use(async (config) => {
   const token = await getAccessToken();
