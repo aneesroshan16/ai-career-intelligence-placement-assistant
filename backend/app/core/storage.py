@@ -53,15 +53,18 @@ class SupabaseStorageProvider(StorageProvider):
         unique_name = f"{uuid.uuid4().hex}_{filename}"
         object_path = f"{self.bucket}/{unique_name}"
         url = f"{self.base_url}/storage/v1/object/{object_path}"
+        effective_content_type = content_type or "application/octet-stream"
         headers = {
             "Authorization": f"Bearer {self.key}",
-            "Content-Type": content_type,
+            "apikey": self.key,
+            "Content-Type": effective_content_type,
             "x-upsert": "true",
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(url, headers=headers, content=file_bytes)
             resp.raise_for_status()
         return object_path
+
 
     async def get_download_url(self, stored_path: str, expires_in: int = 60) -> str:
         import httpx
