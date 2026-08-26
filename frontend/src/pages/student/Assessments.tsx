@@ -43,11 +43,17 @@ function CodingTab() {
               </Button>
             ))}
           </div>
+          {generateMutation.isError && (
+            <p className="text-sm text-destructive font-medium">
+              Failed to generate coding challenge. Please check your connection and try again.
+            </p>
+          )}
           <Button size="lg" onClick={startChallenge} disabled={generateMutation.isPending} className="shadow-lg">
             {generateMutation.isPending ? "Generating Challenge..." : "Start Coding Test"}
           </Button>
         </Card>
       ) : (
+
         <Card className="glass overflow-hidden border-t-4 border-t-blue-500">
           <CardHeader className="bg-muted/10 border-b">
             <div className="flex justify-between items-start">
@@ -148,8 +154,14 @@ function AptitudeTab() {
               {submitMutation.isPending ? "Scoring..." : "Submit Test"}
             </Button>
           </CardContent>
+          {submitMutation.isError && (
+            <p className="p-4 text-sm text-destructive font-medium text-center border-t bg-destructive/5">
+              Failed to submit aptitude test. Please try again.
+            </p>
+          )}
         </Card>
       )}
+
 
       {submitMutation.data && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>

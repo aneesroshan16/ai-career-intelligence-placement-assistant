@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/form-elements";
@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, User, Mic, Send, Lightbulb, Activity, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export default function InterviewPage() {
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<"hr" | "technical" | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [question, setQuestion] = useState<string | null>(null);
@@ -26,6 +27,13 @@ export default function InterviewPage() {
     enabled: !!resumableSession && !sessionId,
   });
   const targetRoleId = roles?.find((role) => role.name === user?.profile?.target_role)?.id;
+
+  const handleEndSession = () => {
+    setMode(null);
+    setSessionId(null);
+    queryClient.invalidateQueries({ queryKey: ["interview"] });
+  };
+
 
   useEffect(() => {
     if (!savedSession || sessionId) return;
@@ -115,6 +123,11 @@ export default function InterviewPage() {
             <h2 className="text-2xl font-bold capitalize">{mode} Interview Initialization</h2>
             <p className="text-muted-foreground">The AI is reviewing your resume and target role to prepare specific questions.</p>
           </div>
+          {startMutation.isError && (
+            <p className="text-sm text-destructive font-medium">
+              Failed to initialize interview session. Please check your connection and try again.
+            </p>
+          )}
           <Button size="lg" onClick={() => startMutation.mutate(mode)} disabled={startMutation.isPending} className="mt-4 shadow-lg">
             {startMutation.isPending ? "Connecting to AI..." : "Start Interview Session"}
           </Button>
@@ -145,7 +158,7 @@ export default function InterviewPage() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { setMode(null); setSessionId(null); }}>End Session</Button>
+        <Button variant="outline" size="sm" onClick={handleEndSession}>End Session</Button>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-6 p-2 scroll-smooth pr-4 custom-scrollbar">
@@ -225,7 +238,7 @@ export default function InterviewPage() {
             </div>
             <h3 className="text-2xl font-bold">Interview Completed</h3>
             <p className="text-muted-foreground max-w-md">Your responses have been recorded. Check your dashboard for the aggregated feedback summary.</p>
-            <Button onClick={() => { setMode(null); setSessionId(null); }}>Return to Menu</Button>
+            <Button onClick={handleEndSession}>Return to Menu</Button>
           </motion.div>
         )}
       </div>
@@ -260,9 +273,13 @@ export default function InterviewPage() {
               <Send className="h-5 w-5 ml-1" />
             </Button>
           </div>
+          {answerMutation.isError && (
+            <p className="text-xs text-destructive text-center mt-2">Failed to submit response. Please try again.</p>
+          )}
           <p className="text-[10px] text-center text-muted-foreground mt-2">Press Enter to send, Shift+Enter for new line.</p>
         </div>
       )}
     </motion.div>
   );
 }
+
