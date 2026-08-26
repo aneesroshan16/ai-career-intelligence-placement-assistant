@@ -14,10 +14,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Code2, BrainCircuit, CheckCircle2, Trophy, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
+import { getMe, listRoles } from "@/lib/api/resumeModules";
+
 function CodingTab() {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState<"python" | "java" | "c" | "cpp">("python");
-  const generateMutation = useMutation({ mutationFn: () => generateCodingProblem(undefined, "medium") });
+  const { data: user } = useQuery({ queryKey: ["user"], queryFn: getMe });
+  const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: listRoles });
+  const targetRoleId = roles?.find((role) => role.name === user?.profile?.target_role)?.id;
+
+  const generateMutation = useMutation({ mutationFn: () => generateCodingProblem(targetRoleId, "medium") });
   const submitMutation = useMutation({
     mutationFn: () => submitCode(generateMutation.data!.id, code, language),
   });
@@ -25,6 +31,7 @@ function CodingTab() {
     setCode("");
     generateMutation.mutate();
   };
+
   const editorCode = code || generateMutation.data?.starter_code?.[language] || "";
 
   return (

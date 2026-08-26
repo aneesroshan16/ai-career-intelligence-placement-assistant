@@ -70,16 +70,18 @@ class OpenAIProvider(LLMProvider):
         # 2. Fallback to json_object mode with Pydantic validation
         try:
             json_messages = [m.model_dump() for m in messages]
+            json_prompt = f"Respond with valid JSON matching this schema: {schema.model_json_schema()}"
             if json_messages and json_messages[0].get("role") == "system":
-                json_messages[0]["content"] = (
-                    f"{json_messages[0]['content']}\n"
-                    f"Respond with valid JSON matching this schema: {schema.model_json_schema()}"
-                )
+                json_messages[0]["content"] = f"{json_messages[0]['content']}\n{json_prompt}"
+            else:
+                json_messages.insert(0, {"role": "system", "content": json_prompt})
+
             resp = await self._client.chat.completions.create(
                 model=self._model,
                 messages=json_messages,
                 response_format={"type": "json_object"},
             )
+
             raw = resp.choices[0].message.content or "{}"
             return schema.model_validate_json(raw)
         except Exception as exc:  # noqa: BLE001
