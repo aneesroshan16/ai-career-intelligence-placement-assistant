@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/form-elements";
-import { startInterview, submitInterviewAnswer } from "@/lib/api/assessmentModules";
+import { getInterviewSession, listInterviewSessions, startInterview, submitInterviewAnswer } from "@/lib/api/assessmentModules";
 import { getMe, listRoles } from "@/lib/api/resumeModules";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, User, Mic, Send, Lightbulb, Activity, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
@@ -18,7 +18,30 @@ export default function InterviewPage() {
   const [history, setHistory] = useState<{q: string, a: string, f?: Record<string, unknown>}[]>([]);
   const { data: user } = useQuery({ queryKey: ["user"], queryFn: getMe });
   const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: listRoles });
+  const { data: sessions } = useQuery({ queryKey: ["interview", "sessions"], queryFn: listInterviewSessions });
+  const resumableSession = sessions?.find((item) => item.status === "in_progress");
+  const { data: savedSession } = useQuery({
+    queryKey: ["interview", "session", resumableSession?.id],
+    queryFn: () => getInterviewSession(resumableSession!.id),
+    enabled: !!resumableSession && !sessionId,
+  });
   const targetRoleId = roles?.find((role) => role.name === user?.profile?.target_role)?.id;
+
+  useEffect(() => {
+    if (!savedSession || sessionId) return;
+
+    const turns = [...savedSession.turns].sort((a, b) => a.turn_number - b.turn_number);
+    const currentTurn = turns.at(-1);
+    setMode(savedSession.mode);
+    setSessionId(savedSession.id);
+    setStatus(savedSession.status);
+    setQuestion(currentTurn?.answer ? null : currentTurn?.question ?? null);
+    setHistory(turns.filter((turn) => turn.answer).map((turn) => ({
+      q: turn.question,
+      a: turn.answer!,
+      f: turn.feedback ?? undefined,
+    })));
+  }, [savedSession, sessionId]);
 
   const startMutation = useMutation({
     mutationFn: (m: "hr" | "technical") => startInterview(m, targetRoleId),

@@ -34,9 +34,12 @@ async def get_recommended_jobs(
 ):
     resume_service = ResumeService(db)
     matching_service = MatchingService(db)
-    resume = await resume_service.get_active_for_user(user.id)
+    resume = await resume_service.repo.get_active_for_user(user.id)
+    if not resume:
+        return success_envelope([], request)
     matches = await matching_service.compute(str(resume.id))
     return success_envelope(matches, request)
+
 
 
 @router.get("/{job_id}")

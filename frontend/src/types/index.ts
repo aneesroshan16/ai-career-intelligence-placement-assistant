@@ -184,6 +184,16 @@ export interface InterviewSession {
   score: number | null;
 }
 
+export interface InterviewSessionDetail extends InterviewSession {
+  turns: {
+    id: string;
+    turn_number: number;
+    question: string;
+    answer: string | null;
+    feedback: Record<string, unknown> | null;
+  }[];
+}
+
 export interface CodingProblem {
   id: string;
   title: string;

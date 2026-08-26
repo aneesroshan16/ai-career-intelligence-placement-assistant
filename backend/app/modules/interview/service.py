@@ -15,12 +15,6 @@ from app.modules.skills.models import Role
 
 _MAX_TURNS = 5
 
-_OPENING_QUESTIONS = {
-    "hr": "Tell me about yourself and why you're interested in this role.",
-    "technical": "Walk me through a technical project you're most proud of and the design decisions you made.",
-}
-
-
 class InterviewService:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -33,15 +27,29 @@ class InterviewService:
 
         resume = await ResumeRepository(self.session).get_active_for_user(user_id)
         role = await self.session.get(Role, role_id) if role_id else None
-        # The opening question cites only persisted resume evidence.  This keeps
-        # interviews grounded even when an LLM provider is unavailable.
-        if mode == "technical" and resume and resume.projects:
-            project = resume.projects[0]
-            first_question = f"For the {role.name if role else 'target'} role, walk me through your project '{project.title}' and the technical decisions you made."
-        elif mode == "hr" and role:
-            first_question = f"Why are you targeting the {role.name} role, and which experience from your resume best prepares you for it?"
-        else:
-            first_question = _OPENING_QUESTIONS[mode]
+        role_name = role.name if role else "the candidate's target role"
+        resume_context = ""
+        if resume and resume.projects:
+            resume_context = f" The candidate has a project titled '{resume.projects[0].title}'."
+
+        opening_question: NextQuestion = await self.llm.complete_json(
+            [
+                LLMMessage(
+                    role="system",
+                    content=f"You are conducting a {mode} interview for {role_name}.",
+                ),
+                LLMMessage(
+                    role="user",
+                    content=(
+                        "Generate one concise opening interview question tailored to the role and "
+                        "the candidate context. Return only the structured question."
+                        f"{resume_context}"
+                    ),
+                ),
+            ],
+            NextQuestion,
+        )
+        first_question = opening_question.question
         interview = await self.repo.create_session(user_id=uuid.UUID(user_id), mode=mode, role_id=role_id)
         await self.repo.add_turn(session_id=interview.id, turn_number=1, question=first_question)
         return interview, first_question

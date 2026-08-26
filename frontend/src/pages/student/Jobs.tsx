@@ -184,7 +184,6 @@ export default function JobsPage() {
                           <span className="text-xl font-bold text-blue-600">{Math.round(match.similarity_score * 100)}%</span>
                           <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Match</span>
                         </div>
-                        <Button size="sm" className="w-full rounded-full shadow-sm">Apply</Button>
                       </div>
                     </motion.div>
                   ))}
@@ -246,9 +245,6 @@ export default function JobsPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center justify-end md:justify-center border-t md:border-t-0 md:border-l pt-3 md:pt-0 md:pl-4">
-                        <Button variant="outline" size="sm" className="whitespace-nowrap shadow-sm">View Details</Button>
-                      </div>
                     </div>
                   ))}
                   

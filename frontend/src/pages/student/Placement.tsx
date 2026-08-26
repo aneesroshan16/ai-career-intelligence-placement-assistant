@@ -79,6 +79,11 @@ export default function PlacementPage() {
             <CardTitle>Prediction Result</CardTitle>
           </CardHeader>
           <CardContent>
+            {mutation.isError && (
+              <p className="text-sm text-destructive font-medium mb-4">
+                Failed to compute prediction. Please ensure all profile inputs are valid values.
+              </p>
+            )}
             {mutation.data ? (
               <div className="space-y-4">
                 <div className="text-center">
@@ -99,6 +104,8 @@ export default function PlacementPage() {
             )}
           </CardContent>
         </Card>
+
+
       </div>
     </div>
   );

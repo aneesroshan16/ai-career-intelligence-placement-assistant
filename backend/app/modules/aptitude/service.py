@@ -17,7 +17,10 @@ class AptitudeService:
         questions = []
         for category in _CATEGORIES:
             questions.extend(await self.repo.random_questions(category, _QUESTIONS_PER_CATEGORY))
+        if not questions:
+            questions = await self.repo.all_questions()
         return questions
+
 
     async def submit(self, user_id: str, answers: list) -> dict:
         question_ids = [str(a.question_id) for a in answers]

@@ -20,6 +20,12 @@ class AptitudeRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def all_questions(self, limit: int = 15) -> list[AptitudeQuestion]:
+        stmt = select(AptitudeQuestion).order_by(func.random()).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+
     async def get_many(self, ids: list[str]) -> list[AptitudeQuestion]:
         stmt = select(AptitudeQuestion).where(AptitudeQuestion.id.in_([uuid.UUID(i) for i in ids]))
         result = await self.session.execute(stmt)

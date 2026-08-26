@@ -54,7 +54,14 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging()
+    try:
+        from scripts.seed_data import seed
+        await seed()
+    except Exception as exc:
+        import logging
+        logging.getLogger("uvicorn.error").warning(f"Startup seed skipped/failed: {exc}")
     yield
+
 
 
 def create_app() -> FastAPI:

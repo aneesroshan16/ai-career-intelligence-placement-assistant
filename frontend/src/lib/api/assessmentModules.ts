@@ -7,6 +7,7 @@ import type {
   CodingProblem,
   DashboardData,
   InterviewSession,
+  InterviewSessionDetail,
   Job,
   JobMatch,
   PlacementFeatures,
@@ -45,6 +46,8 @@ export const submitInterviewAnswer = (sessionId: string, answer: string) =>
 export const completeInterview = (sessionId: string) =>
   unwrap<InterviewSession>(apiClient.post(`/interview/sessions/${sessionId}/complete`));
 export const listInterviewSessions = () => unwrap<InterviewSession[]>(apiClient.get("/interview/sessions"));
+export const getInterviewSession = (sessionId: string) =>
+  unwrap<InterviewSessionDetail>(apiClient.get(`/interview/sessions/${sessionId}`));
 
 // --- Coding Assessment ---
 export const generateCodingProblem = (roleId: number | undefined, difficulty: string) =>
