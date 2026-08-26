@@ -32,7 +32,8 @@ services:
       - key: AUTH_MODE
         value: supabase
       - key: LLM_PROVIDER
-        value: openai # switched from mock once OPENAI_API_KEY is configured on Render
+        value: gemini # Google Gemini free tier provider
+
       - key: OPENAI_API_KEY
         sync: false
       - key: GEMINI_API_KEY

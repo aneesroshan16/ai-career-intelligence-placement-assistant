@@ -58,6 +58,15 @@ class GeminiProvider(LLMProvider):
             resp = await model.generate_content_async(
                 prompt, generation_config={"response_mime_type": "application/json"},
             )
-            return schema.model_validate_json(resp.text)
+            raw_text = (resp.text or "").strip()
+            if raw_text.startswith("```"):
+                lines = raw_text.splitlines()
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                raw_text = "\n".join(lines).strip()
+            return schema.model_validate_json(raw_text)
         except Exception as exc:  # noqa: BLE001
             raise ExternalServiceError(f"Gemini structured completion failed: {exc}") from exc
+
