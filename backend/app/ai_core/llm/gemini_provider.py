@@ -59,13 +59,22 @@ class GeminiProvider(LLMProvider):
                 prompt, generation_config={"response_mime_type": "application/json"},
             )
             raw_text = (resp.text or "").strip()
-            if raw_text.startswith("```"):
+            
+            # Remove markdown code blocks if present anywhere in the text
+            if "```" in raw_text:
                 lines = raw_text.splitlines()
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].startswith("```"):
-                    lines = lines[:-1]
-                raw_text = "\n".join(lines).strip()
+                start_idx = next((i for i, line in enumerate(lines) if line.strip().startswith("```")), -1)
+                end_idx = next((i for i in range(len(lines)-1, -1, -1) if lines[i].strip().startswith("```")), -1)
+                if start_idx != -1 and end_idx != -1 and start_idx < end_idx:
+                    raw_text = "\n".join(lines[start_idx+1:end_idx]).strip()
+
+            # Ensure we only parse the JSON part by stripping surrounding conversational text
+            first_idx = min([i for i in [raw_text.find("{"), raw_text.find("[")] if i != -1], default=-1)
+            last_idx = max([raw_text.rfind("}"), raw_text.rfind("]")], default=-1)
+            
+            if first_idx != -1 and last_idx != -1 and last_idx > first_idx:
+                raw_text = raw_text[first_idx:last_idx+1]
+                
             return schema.model_validate_json(raw_text)
         except Exception as exc:  # noqa: BLE001
             raise ExternalServiceError(f"Gemini structured completion failed: {exc}") from exc

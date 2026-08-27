@@ -23,7 +23,7 @@ export class ApiError extends Error {
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
-export const apiClient: AxiosInstance = axios.create({ baseURL, timeout: 60000 });
+export const apiClient: AxiosInstance = axios.create({ baseURL, timeout: 100000 });
 
 
 apiClient.interceptors.request.use(async (config) => {
@@ -38,6 +38,13 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiEnvelope<unknown>>) => {
+    if (error.code === 'ECONNABORTED' || error.message.toLowerCase().includes('timeout') || error.message === 'Network Error') {
+      throw new ApiError(
+        "SERVER_WAKING_UP",
+        "The backend server is waking up from sleep. This might take a minute, please try again.",
+        {}
+      );
+    }
     const envelope = error.response?.data;
     if (envelope?.error) {
       throw new ApiError(envelope.error.code, envelope.error.message, envelope.error.details, error.response?.status);

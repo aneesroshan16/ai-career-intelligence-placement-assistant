@@ -162,9 +162,17 @@ class ATSService:
 
         comprehensive = await self._comprehensive_analysis(resume, target_role_id, role_name, keyword_score,
                                                            section_score, formatting_score, missing_sections)
-        # Deterministic report content is used for scores and recommendations.  The
-        # optional LLM advice is deliberately not required for a valid ATS report.
+        # Deterministic report content is used for scores and recommendations.
         suggestions = [comprehensive]
+        
+        # Add LLM-generated actionable advice
+        try:
+            llm_advice = await self._generate_suggestions(missing_sections, keyword_score, raw_text, role_name)
+            if llm_advice:
+                suggestions.extend(llm_advice)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to generate LLM ATS suggestions: {exc}")
 
         return await self.repo.create(
             resume_id=resume.id,
