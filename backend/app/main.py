@@ -110,7 +110,22 @@ def create_app() -> FastAPI:
             "health_url": "/health"
         }
 
+    @app.get("/api/v1/system/provider", tags=["System"])
+    async def provider_info():
+        """Diagnostic: returns active LLM provider name and model. No secrets exposed."""
+        from app.ai_core.llm.factory import get_llm_provider
+        provider = get_llm_provider()
+        provider_name = type(provider).__name__
+        return {
+            "llm_provider_setting": settings.LLM_PROVIDER,
+            "llm_provider_class": provider_name,
+            "gemini_model": settings.GEMINI_MODEL,
+            "is_mock": provider_name == "MockLLMProvider",
+            "is_gemini": provider_name == "GeminiProvider",
+        }
+
     return app
+
 
 
 def _rate_limit_handler(request, exc):
